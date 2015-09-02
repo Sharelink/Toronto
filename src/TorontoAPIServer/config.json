@@ -1,0 +1,15 @@
+﻿{
+  "Data": {
+    "App": {
+      "appname": "TorontoAPIServer",
+      "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b"
+    },
+    "TokenServer": {
+        "Host": "192.168.0.20",
+        "Port": 6379,
+        "Password": null,
+        "Db": 0
+      }
+    }
+  
+}
