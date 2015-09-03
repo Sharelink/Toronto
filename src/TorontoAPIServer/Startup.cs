@@ -21,6 +21,7 @@ namespace TorontoAPIServer
         public static IServiceProvider ServicesProvider { get; private set; }
         public static string Appkey { get; private set; }
         public static string Appname { get; private set; }
+        public static string APIUrl { get; private set; }
 
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
@@ -31,6 +32,7 @@ namespace TorontoAPIServer
             Configuration = builder.Build();
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
+            APIUrl = "http://192.168.0.168:8088/api";
         }
 
         // This method gets called by a runtime.
@@ -39,7 +41,7 @@ namespace TorontoAPIServer
         {
             services.AddMvc();
 
-            ITokenRedisServerConfig redisSvrConfig = new TokenRedisServerConfig()
+            IRedisServerConfig redisSvrConfig = new RedisServerConfig()
             {
                 Db = long.Parse(Configuration["Data:TokenServer:Db"]),
                 Host = Configuration["Data:TokenServer:Host"],
