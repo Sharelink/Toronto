@@ -6,6 +6,7 @@ using TorontoService;
 using System.Threading.Tasks;
 using System;
 using BahamutService.Model;
+using BahamutCommon;
 
 namespace TorontoAPIServer.Controllers
 {
@@ -14,26 +15,34 @@ namespace TorontoAPIServer.Controllers
     {
         // GET /Accounts : return my account information
         [HttpGet]
-        public Account Get()
+        public object Get()
         {
-            //var accountService = this.UseAccountService().GetAccountService();
-            //return accountService.GetAccount();
-            return null;
+            var accountService = Startup.ServicesProvider.GetAccountService();
+            var account = accountService.GetAccount(UserSessionData.AccountId);
+            return new
+            {
+                accountId = account.AccountID,
+                accountName = account.AccountName,
+                createTime = DateTimeUtil.ToString(account.CreateTime),
+                name = account.Name,
+                mobile = account.Mobile,
+                email = account.Email
+            };
         }
 
         // PUT /Accounts (name,birthdate) : update my account properties
         [HttpPut]
         public void Put(string name, DateTime birthdate)
         {
-            //var accountService = this.UseAccountService().GetAccountService();
-            //if (name != null)
-            //{
-            //    accountService.ChangeName(name);
-            //}
-            //if (birthdate != null)
-            //{
-            //    accountService.ChangeAccountBirthday(birthdate);
-            //}
+            var accountService = Startup.ServicesProvider.GetAccountService();
+            if (name != null)
+            {
+                accountService.ChangeName(UserSessionData.AccountId,name);
+            }
+            if (birthdate != null)
+            {
+                accountService.ChangeAccountBirthday(UserSessionData.AccountId,birthdate);
+            }
         }
 
     }
