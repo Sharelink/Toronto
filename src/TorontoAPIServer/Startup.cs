@@ -71,6 +71,11 @@ namespace TorontoAPIServer
 
     public static class IGetBahamutServiceExtension
     {
+        public static BahamutAccountService GetAccountService(this IServiceProvider provider)
+        {
+            return provider.GetService<BahamutAccountService>();
+        }
+
         public static TokenService GetTokenService(this IServiceProvider provider)
         {
             return provider.GetService<TokenService>();
