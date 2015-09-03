@@ -18,18 +18,16 @@ namespace TorontoAPIServer.Controllers
         [HttpGet]
         public object Get()
         {
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            return service.GetAllMyUserTags();
+            var service = this.UseSharelinkTagService().GetSharelinkTagService();
+            return service.GetMyAllSharelinkTags();
         }
 
-        //PUT /UserTags/{userId} (willAddTagIds,willRemoveTagIds) : update my linked user tag
-        [HttpPut("{linkedUserId}")]
-        public void Put(string linkedUserId, string willAddTagIds, string willRemoveTagIds)
+        //PUT /UserTags/{userId} : Get linked user's all tags from server
+        [HttpPut("api/[controller]/{linkedUserId}")]
+        public void Put(string linkedUserId)
         {
-            string[] willAddTagIdArr = willAddTagIds.Split('#');
-            string[] willRemoveTagIdArr = willRemoveTagIds.Split('#');
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            service.UpdateMyUserTags(linkedUserId, willAddTagIdArr, willRemoveTagIdArr);
+            var service = this.UseSharelinkTagService().GetSharelinkTagService();
+
         }
 
     }

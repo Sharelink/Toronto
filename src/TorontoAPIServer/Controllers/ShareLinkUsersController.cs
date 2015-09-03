@@ -23,26 +23,27 @@ namespace TorontoAPIServer.Controllers
         }
 
         //GET /ShareLinkUsers/{id} : return the user of id
-        [HttpGet("{id}")]
-        public SharelinkUser Get(string id)
+        [HttpGet("{userId}")]
+        public async Task<SharelinkUser> Get(string userId)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            return userService.GetAllMyLinkedUsers().Where(u => u.UserId == id).First();
+            return await userService.GetMyLinkedUser(userId);
         }
 
         //PUT /ShareLinkUsers (nickName,signText) : update my user profile property
         [HttpPut]
-        public void Put(string nickName, string signText)
+        public async Task<bool> Put(string nickName, string signText)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             if (nickName != null)
             {
-                userService.UpdateMyUserProfileNickName( nickName);
+                return await userService.UpdateMyUserProfileNickName(nickName);
             }
-            if(signText != null)
+            if (signText != null)
             {
-                userService.UpdateMyUserProfileSignText( signText);
+                return await userService.UpdateMyUserProfileSignText(signText);
             }
+            return false;
         }
     }
 }

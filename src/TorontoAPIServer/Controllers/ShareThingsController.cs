@@ -7,6 +7,7 @@ using TorontoService;
 using BahamutCommon;
 using BahamutService;
 using TorontoModel.MongodbModel;
+using MongoDB.Bson;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -45,7 +46,7 @@ namespace TorontoAPIServer.Controllers
 
         // POST /ShareThings (pshareid,sharetitle,sharetypeid,shareContent) : post a new share,if pshareid equals 0, means not a reshare action
         [HttpPost]
-        public ShareThing Post(string pShareId, string shareTitle, string shareTypeId,string tagIds, string shareContent)
+        public object Post(string pShareId, string shareTitle, string shareTypeId,string tagIds, string shareContent)
         {
             var service = this.UseShareService().GetShareService();
             var newShare = new ShareThing()
@@ -54,18 +55,18 @@ namespace TorontoAPIServer.Controllers
                 ShareTime = DateTime.Now,
                 Title = shareTitle,
                 UserId = UserSessionData.UserId,
-                TagIds = tagIds.Split('#'),
+                
                 ShareContent = new ShareContent()
                 {
                     ContentDocument = shareContent,
                     Type = new ShareType()
                     {
-                        ShareTypeId = shareTypeId
+                        Id = new ObjectId(shareTypeId)
                     }
                 }
             };
             var itemWithId = service.PostNewShareThing(newShare);
-            return new ShareThing() { ShareId = itemWithId.ShareId };
+            return new { ShareId = itemWithId.Id.ToString() };
         }
 
     }

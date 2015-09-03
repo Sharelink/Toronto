@@ -5,32 +5,48 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using BahamutService.Model;
 using TorontoService;
+using TorontoModel.MongodbModel;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace TorontoAPIServer.Controllers
 {
     [Route("api/[controller]")]
-    public class NewSharelinkUsersController : Controller
+    public class NewSharelinkUsersController : TorontoAPIController
     {
         // POST api/values
         [HttpPost]
-        public AccessTokenValidateResult Post([FromBody]string appkey, string accountId, string accessToken)
+        public async Task<object> Post([FromBody]string appkey, string accountId, string accessToken)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
-            var tokenResult = tokenService.ValidateAccessToken(appkey, accountId, accessToken);
-            if (tokenResult.Succeed)
+            if(appkey != Startup.Appkey)
             {
-                var accountService = new AccountService();
-                if (accountService.BindAccountUser(accountId, tokenResult.UserId))
+                Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                return "Validate Fail,Can't Not Regist New User";
+            }
+            else if (tokenService.ValidateToGetSessionData(Startup.Appkey,accountId,accessToken) != null)
+            {
+                var newUser = new SharelinkUser()
                 {
-                    return tokenResult;
-                }
-                return tokenResult;
+                    AccountId = accountId
+                };
+                var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+                newUser = await userService.CreateNewUser(newUser);
+                var sessionData = tokenService.ValidateAccessToken(Startup.Appkey, accountId, newUser.Id.ToString(), accessToken);
+                return new
+                {
+                    Succeed = true,
+                    AppToken = sessionData.UserSessionData.AppToken,
+                    UserId = sessionData.UserSessionData.UserId,
+                    APIServer = Startup.APIUrl,
+                    FileAPIServer = "http://192.168.0.168:8089/api"
+                };
             }
             else
             {
-                return new AccessTokenValidateResult() { Message = "Validate Failed" };  
+                Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                return "Validate Fail,Can't Not Regist New User";
             }
         }
     }

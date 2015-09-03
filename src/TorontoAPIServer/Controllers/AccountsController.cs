@@ -16,23 +16,24 @@ namespace TorontoAPIServer.Controllers
         [HttpGet]
         public Account Get()
         {
-            var accountService = this.UseAccountService().GetAccountService();
-            return accountService.GetAccount();
+            //var accountService = this.UseAccountService().GetAccountService();
+            //return accountService.GetAccount();
+            return null;
         }
 
         // PUT /Accounts (name,birthdate) : update my account properties
         [HttpPut]
         public void Put(string name, DateTime birthdate)
         {
-            var accountService = this.UseAccountService().GetAccountService();
-            if (name != null)
-            {
-                accountService.ChangeName(name);
-            }
-            if (birthdate != null)
-            {
-                accountService.ChangeAccountBirthday(birthdate);
-            }
+            //var accountService = this.UseAccountService().GetAccountService();
+            //if (name != null)
+            //{
+            //    accountService.ChangeName(name);
+            //}
+            //if (birthdate != null)
+            //{
+            //    accountService.ChangeAccountBirthday(birthdate);
+            //}
         }
 
     }
