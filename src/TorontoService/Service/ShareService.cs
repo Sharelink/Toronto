@@ -15,24 +15,42 @@ namespace TorontoService
         public AccountSessionData UserSessionData { get; set; }
         IMongoClient Client = new MongoClient();
 
+        public ShareService(IMongoClient client)
+        {
+            Client = client;
+        }
+
         public ShareThing PostNewShareThing(ShareThing newShareThing)
         {
             return null;
         }
 
+        public async void MarkARecordForShareThing(ObjectId shareId, ObjectId userId, string operate = "mark")
+        {
+            var activeRecordCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingActiveRecord>("ShareThingActiveRecord");
+            var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
+            var shareThing = await shareThingCollection.Find(st => st.Id == shareId).FirstAsync();
+            
+            var newRecord = new ShareThingActiveRecord()
+            {
+                Operate = operate,
+                OperateUserId = userId,
+                ShareId = shareId,
+                ShareUserId = shareThing.UserId,
+                Time = DateTime.Now
+            };
+            await activeRecordCollection.InsertOneAsync(newRecord);
+        }
+
         public async Task<IList<ShareThing>> GetUserShareThings(DateTime newerThanThisTime, DateTime olderThanThisTime, int page, int pageCount)
         {
-
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var activeRecordCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingActiveRecord>("ShareThingActiveRecord");
-            var userCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            var userTagCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
-            var me = await userCollection.Find(u => u.Id == new ObjectId(UserSessionData.UserId)).FirstAsync();
 
-            var shareUserService = new SharelinkUserService();
-            var shareTagService = new SharelinkTagService();
+            var shareUserService = new SharelinkUserService(Client);
+            var shareTagService = new SharelinkTagService(Client);
             var linkedUserIds = await shareUserService.GetMyLinkedUserIds();
-            var myTags =await shareTagService.GetMyTagNames();
+            var myTags = await shareTagService.GetMyTagNames();
 
             var inFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().In("ShareUserId", linkedUserIds);
             var timeNewFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().Gt("Time", newerThanThisTime);
@@ -49,9 +67,11 @@ namespace TorontoService
 
             var sInFilter = new FilterDefinitionBuilder<ShareThing>().In("Id", records) & new FilterDefinitionBuilder<ShareThing>().AnyIn("Tags", myTags);
             var result = await shareThingCollection.Find(sInFilter).ToListAsync();
-            foreach (var item in result)
+            for (int i = 0; i < result.Count; i++)
             {
+                var item = result[i];
                 item.Votes = (from v in item.Votes where linkedUserIds.Contains(v.UserId) select v).ToArray();
+                item.LastActiveTime = records[i].Time;
             }
             return result;
         }

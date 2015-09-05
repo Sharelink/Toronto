@@ -17,7 +17,7 @@ namespace TorontoAPIServer.Controllers
     {
         // POST api/values
         [HttpPost]
-        public async Task<object> Post([FromBody]string appkey, string accountId, string accessToken)
+        public object Post([FromBody]string appkey, string accountId, string accessToken)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             if(appkey != Startup.Appkey)
@@ -32,7 +32,10 @@ namespace TorontoAPIServer.Controllers
                     AccountId = accountId
                 };
                 var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-                newUser = await userService.CreateNewUser(newUser);
+                var taskResult = Task.Run(() => {
+                    return userService.CreateNewUser(newUser);
+                });
+                newUser = taskResult.Result;
                 var sessionData = tokenService.ValidateAccessToken(Startup.Appkey, accountId, newUser.Id.ToString(), accessToken);
                 return new
                 {

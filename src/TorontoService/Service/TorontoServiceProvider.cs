@@ -11,7 +11,7 @@ namespace TorontoService
     {
         public AccountSessionData UserSessionData { get; set; }
 
-        public object GetService(Type type)
+        virtual public object GetService(Type type)
         {
             var service = type.GetConstructor(Type.EmptyTypes).Invoke(null);
             var iAccountSessionData = service as IAccountSessionData;
@@ -22,7 +22,7 @@ namespace TorontoService
             return service;
         }
 
-        public object GetService(Type type, params object[] args)
+        virtual public object GetService(Type type, params object[] args)
         {
             var argsTypes = from arg in args select arg.GetType();
             var service = type.GetConstructor(argsTypes.ToArray()).Invoke(args);
@@ -34,12 +34,5 @@ namespace TorontoService
             return service;
         }
 
-        public static IBahamutServiceProvider GetInstance(AccountSessionData UserSessionData)
-        {
-            return new TorontoServiceProvider()
-            {
-                UserSessionData = UserSessionData
-            };
-        }
     }
 }

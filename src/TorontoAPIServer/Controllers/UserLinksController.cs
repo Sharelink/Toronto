@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using TorontoService;
 using System.Net;
+using BahamutCommon;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,7 +20,18 @@ namespace TorontoAPIServer.Controllers
         public object Get()
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            return service.GetAllMyUserlinks();
+            var taskRes = Task.Run(() => {
+                return service.GetAllMyUserlinks();
+            });
+            return from ul in taskRes.Result
+                   select new
+                   {
+                       linkId = ul.SlaveUserUserId,
+                       slaveUserId = ul.SlaveUserUserId,
+                       status = ul.StateDocument,
+                       createTime = DateTimeUtil.ToString(ul.CreateTime)
+                   };
+
         }
 
         //PUT /UserLinks (myUserId,otherUserId,newState) : update my userlink status with other people
@@ -38,7 +50,7 @@ namespace TorontoAPIServer.Controllers
         public void Post(string otherUserId)
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            service.CreateNewLinkWithOtherUser(otherUserId);
+            //service.CreateNewLinkWithOtherUser(otherUserId);
         }
     }
 }

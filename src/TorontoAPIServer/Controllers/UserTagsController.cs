@@ -14,20 +14,19 @@ namespace TorontoAPIServer.Controllers
     public class UserTagsController : TorontoAPIController
     {
 
-        //GET /UserTags : return all usertag of my usertag collection
-        [HttpGet]
-        public object Get()
+        //GET /UserTags/{linkedUserId} : return all usertag of my usertag collection
+        [HttpGet("{linkedUserId}")]
+        public object Get(string linkedUserId)
         {
             var service = this.UseSharelinkTagService().GetSharelinkTagService();
-            return service.GetMyAllSharelinkTags();
-        }
-
-        //PUT /UserTags/{userId} : Get linked user's all tags from server
-        [HttpPut("api/[controller]/{linkedUserId}")]
-        public void Put(string linkedUserId)
-        {
-            var service = this.UseSharelinkTagService().GetSharelinkTagService();
-
+            var taskResult = Task.Run(() => { return service.GetUserSharelinkTags(linkedUserId); });
+            return from t in taskResult.Result
+                   select new
+                   {
+                       tagId = t.Id.ToString(),
+                       tagName = t.TagName,
+                       tagColor = t.TagColor
+                   };
         }
 
     }

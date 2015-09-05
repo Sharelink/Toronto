@@ -12,6 +12,7 @@ using Microsoft.Framework.Configuration;
 using Microsoft.Framework.Runtime;
 using BahamutService;
 using DataLevelDefines;
+using BahamutCommon;
 
 namespace TorontoAPIServer
 {
@@ -22,7 +23,9 @@ namespace TorontoAPIServer
         public static string Appkey { get; private set; }
         public static string Appname { get; private set; }
         public static string APIUrl { get; private set; }
-
+        public static IRedisServerConfig TokenServerConfig { get; private set; }
+        public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
+        public static string BahamutDBConnectionString { get; private set; }
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
             // Setup configuration sources.
@@ -32,7 +35,19 @@ namespace TorontoAPIServer
             Configuration = builder.Build();
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
-            APIUrl = "http://192.168.0.168:8088/api";
+            APIUrl = Configuration["Data:ServiceUrl"] + "/api";
+            TokenServerConfig = new RedisServerConfig()
+            {
+                Db = long.Parse(Configuration["Data:TokenServer:Db"]),
+                Host = Configuration["Data:TokenServer:Host"],
+                Password = Configuration["Data:TokenServer:Password"],
+                Port = int.Parse(Configuration["Data:TokenServer:Port"])
+            };
+            SharelinkDBConfig = new MongoDbServerConfig()
+            {
+                Url = Configuration["Data:SharelinkDBServer:Url"]
+            };
+            BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
         }
 
         // This method gets called by a runtime.
@@ -41,14 +56,8 @@ namespace TorontoAPIServer
         {
             services.AddMvc();
 
-            IRedisServerConfig redisSvrConfig = new RedisServerConfig()
-            {
-                Db = long.Parse(Configuration["Data:TokenServer:Db"]),
-                Host = Configuration["Data:TokenServer:Host"],
-                Password = Configuration["Data:TokenServer:Password"],
-                Port = int.Parse(Configuration["Data:TokenServer:Port"])
-            };
-            services.AddInstance(new TokenService(redisSvrConfig));
+            services.AddInstance(new TokenService(TokenServerConfig));
+            services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
             // services.AddWebApiConventions();

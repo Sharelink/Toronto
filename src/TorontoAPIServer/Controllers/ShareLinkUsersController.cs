@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using TorontoService;
 using TorontoModel.MongodbModel;
+using BahamutCommon;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -19,31 +20,55 @@ namespace TorontoAPIServer.Controllers
         public object Get()
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            return userService.GetAllMyLinkedUsers();
+            var taskRes = Task.Run(() => { return userService.GetAllMyLinkedUsers(); });
+            return from u in taskRes.Result select new
+            {
+                userId = u.Id.ToString() ,
+                nickName = u.NickName,
+                noteName = u.NoteName,
+                headIconId = u.HeadIcon,
+                personalVideoId = "",
+                createTime = DateTimeUtil.ToString(u.CreateTime),
+                signText = u.SignText
+            };
         }
 
         //GET /ShareLinkUsers/{id} : return the user of id
         [HttpGet("{userId}")]
-        public async Task<SharelinkUser> Get(string userId)
+        public SharelinkUser Get(string userId)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            return await userService.GetMyLinkedUser(userId);
+            var taskResult = Task.Run(() => 
+            {
+                return userService.GetMyLinkedUser(userId);
+            });
+            return taskResult.Result;
         }
 
-        //PUT /ShareLinkUsers (nickName,signText) : update my user profile property
-        [HttpPut]
-        public async Task<bool> Put(string nickName, string signText)
+        //PUT /ShareLinkUsers/NickName : update my user nick profile property
+        [HttpPut("NickName")]
+        public bool Put(string nickName)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            if (nickName != null)
+            var taskResult = Task.Run(() =>
             {
-                return await userService.UpdateMyUserProfileNickName(nickName);
-            }
-            if (signText != null)
+                return userService.UpdateMyUserProfileNickName(nickName);
+            });
+            return taskResult.Result;
+            
+        }
+
+        //PUT /ShareLinkUsers/SignText : update my user signtext profile property
+        [HttpPut("SignText")]
+        public bool PutSignText(string signText)
+        {
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var taskResult = Task.Run(() =>
             {
-                return await userService.UpdateMyUserProfileSignText(signText);
-            }
-            return false;
+                return userService.UpdateMyUserProfileSignText(signText);
+            });
+            return taskResult.Result;
+
         }
     }
 }

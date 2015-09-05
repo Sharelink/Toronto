@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using TorontoService;
 using BahamutCommon;
 using BahamutService.Model;
+using MongoDB.Driver;
 
 namespace TorontoAPIServer.Controllers
 {
@@ -27,7 +28,7 @@ namespace TorontoAPIServer.Controllers
             {
                 if(_torontoServiceProvider == null)
                 {
-                    _torontoServiceProvider = TorontoServiceProvider.GetInstance(UserSessionData);
+                    _torontoServiceProvider = TorontoServiceProviderUseMongoDb.GetInstance(UserSessionData);
                 }
                 return _torontoServiceProvider;
             }
@@ -41,5 +42,23 @@ namespace TorontoAPIServer.Controllers
             }
         }
 
+    }
+
+    public class TorontoServiceProviderUseMongoDb:TorontoServiceProvider
+    {
+        IMongoClient Client = new MongoClient(MongoUrl.Create(Startup.SharelinkDBConfig.Url));
+        public override object GetService(Type type)
+        {
+            return GetService(type, Client);
+        }
+
+
+        public static IBahamutServiceProvider GetInstance(AccountSessionData UserSessionData)
+        {
+            return new TorontoServiceProviderUseMongoDb()
+            {
+                UserSessionData = UserSessionData
+            };
+        }
     }
 }

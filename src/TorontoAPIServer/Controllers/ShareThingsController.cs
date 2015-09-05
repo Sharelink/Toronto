@@ -28,8 +28,41 @@ namespace TorontoAPIServer.Controllers
         [HttpGet]
         public object Get(DateTime newerThanThisTime,DateTime olderThanThisTime,int page, int pageCount,string shareIds = null)
         {
+            
             var service = this.UseShareService().GetShareService();
-            return service.GetUserShareThings(newerThanThisTime, olderThanThisTime, page, pageCount);
+            var usrService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var things = Task.Run(() => {
+                return service.GetUserShareThings(newerThanThisTime, olderThanThisTime, page, pageCount);
+            }).Result;
+            var userIds = from t in things select t.UserId.ToString();
+            var users = Task.Run(() => 
+            {
+                return usrService.GetMyLinkedUsers(userIds, true);
+            }).Result;
+            var result = new object[things.Count];
+            for (int i = 0; i < result.Length; i++)
+            {
+                var uId = things[i].UserId.ToString();
+                var user = users[uId];
+                var thing = things[i];
+                result[i] = new
+                {
+                    shareId = thing.Id.ToString(),
+                    pShareId = thing.PShareId.ToString(),
+                    userId = uId,
+                    userNick = user.NickName,
+                    headIconImageId = user.HeadIcon,
+                    shareTime = DateTimeUtil.ToString(thing.ShareTime),
+                    shareType = thing.ShareType.ToString(),
+                    title = thing.Title,
+                    shareContent = thing.ShareContent,
+                    //reShares:[ShareThing]!
+                    voteUsers = (from v in thing.Votes select v.UserId.ToString()).ToArray(),
+                    lastActiveTime = DateTimeUtil.ToString(thing.LastActiveTime),
+                    forTags = thing.Tags
+                };
+            }
+            return result;
         }
 
         /// <summary>
@@ -51,10 +84,10 @@ namespace TorontoAPIServer.Controllers
             var service = this.UseShareService().GetShareService();
             var newShare = new ShareThing()
             {
-                PShareId = pShareId,
+                PShareId = new ObjectId(pShareId),
                 ShareTime = DateTime.Now,
                 Title = shareTitle,
-                UserId = UserSessionData.UserId,
+                UserId = new ObjectId(UserSessionData.UserId),
                 
                 ShareContent = new ShareContent()
                 {

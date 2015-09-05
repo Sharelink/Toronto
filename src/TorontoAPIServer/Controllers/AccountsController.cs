@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System;
 using BahamutService.Model;
 using BahamutCommon;
+using System.Net;
 
 namespace TorontoAPIServer.Controllers
 {
@@ -30,18 +31,39 @@ namespace TorontoAPIServer.Controllers
             };
         }
 
-        // PUT /Accounts (name,birthdate) : update my account properties
-        [HttpPut]
-        public void Put(string name, DateTime birthdate)
+        // PUT /Accounts/Name (name) : update my account name properties
+        [HttpPut("Name")]
+        public void PutName(string name)
         {
             var accountService = Startup.ServicesProvider.GetAccountService();
             if (name != null)
             {
-                accountService.ChangeName(UserSessionData.AccountId,name);
+                if(!accountService.ChangeName(UserSessionData.AccountId,name))
+                {
+                    Response.StatusCode = (int)HttpStatusCode.NotModified;
+                }
             }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
+            }
+        }
+
+        // PUT /Accounts/Name (name) : update my account birth properties
+        [HttpPut("BirthDate")]
+        public void PutBirthDate(DateTime birthdate)
+        {
+            var accountService = Startup.ServicesProvider.GetAccountService();
             if (birthdate != null)
             {
-                accountService.ChangeAccountBirthday(UserSessionData.AccountId,birthdate);
+                if (!accountService.ChangeAccountBirthday(UserSessionData.AccountId, birthdate))
+                {
+                    Response.StatusCode = (int)HttpStatusCode.NotModified;
+                }
+            }
+            else
+            {
+                Response.StatusCode = (int)HttpStatusCode.NotModified;
             }
         }
 

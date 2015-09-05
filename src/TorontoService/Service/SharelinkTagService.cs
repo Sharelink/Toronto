@@ -16,12 +16,19 @@ namespace TorontoService
 
         public AccountSessionData UserSessionData { get; set; }
 
+        public SharelinkTagService(IMongoClient client)
+        {
+            Client = client;
+        }
+
         public async Task<IList<SharelinkTag>> GetUserSharelinkTags(string UserId)
         {
             var userOId = new ObjectId(UserId);
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             var me = await collection.Find(u => u.Id == userOId).FirstAsync();
+
+            //Cache this data
             return await collectionTag.Find(ul => me.SharelinkTags.Contains(ul.Id)).ToListAsync();
         }
 
@@ -45,7 +52,7 @@ namespace TorontoService
             return newTag;
         }
 
-        public async Task<bool> UpdateSharelinkTag(string tagId, string newTagName, string newTagColor)
+        public async Task<bool> UpdateSharelinkTagColor(string tagId ,string newTagColor)
         {
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
@@ -53,29 +60,36 @@ namespace TorontoService
             var tagOId = new ObjectId(tagId);
             if (me.SharelinkTags.Contains(tagOId))
             {
-                var tag = new SharelinkTag()
-                {
-                    Id = tagOId,
-                    TagColor = newTagColor,
-                    TagName = newTagName
-                };
-                var result = await collectionTag.FindOneAndReplaceAsync(t => t.Id == tagOId, tag);
-                return result != null;
+                var result = await collectionTag.UpdateOneAsync(t => t.Id == tagOId, new UpdateDefinitionBuilder<SharelinkTag>().Set(tt => tt.TagColor, newTagColor));
+                return result.ModifiedCount > 0;
             }
             else
             {
                 return false;
             }
+        }
 
+        public async Task<bool> UpdateSharelinkTagName(string tagId ,string newTagName)
+        {
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
+            var me = await collection.Find(u => u.Id == new ObjectId(UserSessionData.UserId)).FirstAsync();
+            var tagOId = new ObjectId(tagId);
+            if (me.SharelinkTags.Contains(tagOId))
+            {
+                var result = await collectionTag.UpdateOneAsync(t => t.Id == tagOId, new UpdateDefinitionBuilder<SharelinkTag>().Set(tt => tt.TagName, newTagName));
+                return result.ModifiedCount > 0;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         public async Task<IEnumerable<string>> GetMyTagNames()
         {
-            var userCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            var userTagCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
-            var me = await userCollection.Find(u => u.Id == new ObjectId(UserSessionData.UserId)).FirstAsync();
-            //TODO:Cache this
-            return from mt in (await userTagCollection.Find(ut => ut.UserId == me.Id).ToListAsync()) select mt.TagName;
+            var userShareLinkTags = await GetUserSharelinkTags(UserSessionData.UserId);
+            return from mt in userShareLinkTags select mt.TagName;
         }
 
         public async Task<bool> DeleteSharelinkTag(string tagId)

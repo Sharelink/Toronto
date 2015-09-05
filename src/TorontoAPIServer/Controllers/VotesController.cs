@@ -14,13 +14,6 @@ namespace TorontoAPIServer.Controllers
     [Route("api/[controller]")]
     public class VotesController : TorontoAPIController
     {
-        // GET /Votes/{shareId} : return the shareId's votes
-        [HttpGet("{shareId}")]
-        public object Get(string shareId)
-        {
-            var shareService = this.UseShareService().GetShareService();
-            return shareService.GetVoteOfShare(shareId);
-        }
 
         //POST /Votes/{shareId} : vote sharething of shareId
         [HttpPost("{shareId}")]
