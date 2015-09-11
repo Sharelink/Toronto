@@ -12,31 +12,32 @@ using System.Net;
 
 namespace TorontoAPIServer.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class NewSharelinkUsersController : TorontoAPIController
     {
         // POST api/values
         [HttpPost]
-        public object Post([FromBody]string appkey, string accountId, string accessToken)
+        public object Post(string accountId, string accessToken,string nickName)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
-            if(appkey != Startup.Appkey)
-            {
-                Response.StatusCode = (int)HttpStatusCode.Unauthorized;
-                return "Validate Fail,Can't Not Regist New User";
-            }
-            else if (tokenService.ValidateToGetSessionData(Startup.Appkey,accountId,accessToken) != null)
+            if (tokenService.ValidateToGetSessionData(Startup.Appkey,accountId,accessToken) != null)
             {
                 var newUser = new SharelinkUser()
                 {
-                    AccountId = accountId
+                    AccountId = accountId,
+                    NickName = nickName,
+                    CreateTime = DateTime.Now,
+                    NoteName = nickName,
                 };
                 var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-                var taskResult = Task.Run(() => {
-                    return userService.CreateNewUser(newUser);
+                var taskResult = Task.Run(async () =>
+                {
+                    var user = await userService.CreateNewUser(newUser);
+                    userService.AskForLink(user.Id.ToString(), user.Id.ToString());
+                    return user;
                 });
                 newUser = taskResult.Result;
-                var sessionData = tokenService.ValidateAccessToken(Startup.Appkey, accountId, newUser.Id.ToString(), accessToken);
+                var sessionData = tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, newUser.Id.ToString());
                 return new
                 {
                     Succeed = true,

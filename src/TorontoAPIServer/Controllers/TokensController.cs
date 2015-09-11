@@ -20,12 +20,12 @@ namespace TorontoAPIServer.Controllers
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var result = Task.Run(() => {
+                return userService.GetUserOfAccountId(accountId);
+            });
             try
             {
-                var result = Task.Run(() => {
-                    return userService.GetUserIdOfAccountId(accountId);
-                });
-                var userId = result.Result;
+                var userId = result.Result.Id.ToString();
                 var tokenResult = tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
                 if (tokenResult.Succeed)
                 {
@@ -34,7 +34,7 @@ namespace TorontoAPIServer.Controllers
                         AppToken = tokenResult.UserSessionData.AppToken,
                         UserId = userId,
                         APIServer = Startup.APIUrl,
-                        FileAPIServer = "http://192.168.0.168:8089/api"
+                        FileAPIServer = "http://192.168.0.168:8089/Files"
                     };
                 }
                 else
@@ -42,13 +42,17 @@ namespace TorontoAPIServer.Controllers
                     Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     return tokenResult.Message;
                 }
-            }
-            catch (NullReferenceException)
+            }catch(NullReferenceException)
             {
                 return new
                 {
-                    RegistAPIServer = "http://192.168.0.168:8088/api"
+                    RegistAPIServer = "http://192.168.0.168:8088"
                 };
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                return "Server Error";
             }
             
         }

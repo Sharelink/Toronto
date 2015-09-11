@@ -10,28 +10,28 @@ using BahamutService;
 
 namespace TorontoAPIServer.Authentication
 {
-    [System.AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    public sealed class NoBasicAuthenticationAttribute : Attribute
-    {
-        // See the attribute guidelines at 
-        //  http://go.microsoft.com/fwlink/?LinkId=85236
-        readonly string positionalString;
+    //[System.AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
+    //public sealed class NoBasicAuthenticationAttribute : Attribute
+    //{
+    //    // See the attribute guidelines at 
+    //    //  http://go.microsoft.com/fwlink/?LinkId=85236
+    //    readonly string positionalString;
 
-        // This is a positional argument
-        public NoBasicAuthenticationAttribute(string positionalString)
-        {
-            this.positionalString = positionalString;
-            BasicAuthentication.ArrowRoute.Add(positionalString, true);
-        }
+    //    // This is a positional argument
+    //    public NoBasicAuthenticationAttribute(string positionalString)
+    //    {
+    //        this.positionalString = positionalString;
+    //        BasicAuthentication.ArrowRoute.Add(positionalString, true);
+    //    }
 
-        public string PositionalString
-        {
-            get { return positionalString; }
-        }
+    //    public string PositionalString
+    //    {
+    //        get { return positionalString; }
+    //    }
 
-        // This is a named argument
-        public int NamedInt { get; set; }
-    }
+    //    // This is a named argument
+    //    public int NamedInt { get; set; }
+    //}
 
     // You may need to install the Microsoft.AspNet.Http.Abstractions package into your project
     public class BasicAuthentication

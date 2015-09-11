@@ -10,9 +10,8 @@ using MongoDB.Driver;
 
 namespace TorontoService
 {
-    public class ShareService : IAccountSessionData
+    public class ShareService
     {
-        public AccountSessionData UserSessionData { get; set; }
         IMongoClient Client = new MongoClient();
 
         public ShareService(IMongoClient client)
@@ -42,25 +41,25 @@ namespace TorontoService
             await activeRecordCollection.InsertOneAsync(newRecord);
         }
 
-        public async Task<IList<ShareThing>> GetUserShareThings(DateTime newerThanThisTime, DateTime olderThanThisTime, int page, int pageCount)
+        public async Task<IList<ShareThing>> GetUserShareThings(string userId, DateTime newerThanThisTime, DateTime olderThanThisTime, int page, int pageCount)
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var activeRecordCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingActiveRecord>("ShareThingActiveRecord");
 
             var shareUserService = new SharelinkUserService(Client);
             var shareTagService = new SharelinkTagService(Client);
-            var linkedUserIds = await shareUserService.GetMyLinkedUserIds();
-            var myTags = await shareTagService.GetMyTagNames();
+            var linkedUserIds =from u in  (await shareUserService.GetLinkedUsersOfUserId(userId)) select u.Id;
+            var myTags = await shareTagService.GetMyTagNames(userId);
 
             var inFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().In("ShareUserId", linkedUserIds);
             var timeNewFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().Gt("Time", newerThanThisTime);
             var timeOldFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().Lt("Time", olderThanThisTime);
             IList<ShareThingActiveRecord> records = null;
-            if (newerThanThisTime != null)
+            if (newerThanThisTime.Ticks > 0)
             {
                 records = await activeRecordCollection.Find(inFilter & timeNewFilter).ToListAsync();
             }
-            else if (olderThanThisTime != null)
+            else if (olderThanThisTime.Ticks > 0)
             {
                 records = await activeRecordCollection.Find(inFilter & timeOldFilter).ToListAsync();
             }
@@ -82,14 +81,14 @@ namespace TorontoService
             return null;
         }
 
-        public async Task<IList<Vote>> GetVoteOfShare(string shareId)
+        public async Task<IList<Vote>> GetVoteOfShare(string userId, string shareId)
         {
             var sId = new ObjectId(shareId);
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var share = await shareThingCollection.Find(s => s.Id == sId).FirstAsync();
-
+            var uOId = new ObjectId(userId);
             var userCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            var me = await userCollection.Find(u => u.Id == new ObjectId(UserSessionData.UserId)).FirstAsync();
+            var me = await userCollection.Find(u => u.Id == uOId).FirstAsync();
 
             //TODO:Cache this
             var linkedUserIds = from lu in me.LinkedUsers select lu.SlaveUserObjectId;
@@ -98,13 +97,13 @@ namespace TorontoService
             return result.ToList();
         }
 
-        public async Task<bool> VoteShare(string shareId)
+        public async Task<bool> VoteShare(string userId, string shareId)
         {
             var sId = new ObjectId(shareId);
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var newVote = new Vote()
             {
-                UserId = new ObjectId(UserSessionData.UserId),
+                UserId = new ObjectId(userId),
                 VoteTime = DateTime.Now
             };
             var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().AddToSet(ts => ts.Votes, newVote));
@@ -112,13 +111,13 @@ namespace TorontoService
             return result.ModifiedCount > 0;
         }
 
-        public async Task<bool> UnvoteShare(string shareId)
+        public async Task<bool> UnvoteShare(string userId, string shareId)
         {
             var sId = new ObjectId(shareId);
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var newVote = new Vote()
             {
-                UserId = new ObjectId(UserSessionData.UserId),
+                UserId = new ObjectId(userId),
                 VoteTime = DateTime.Now
             };
             var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().Pull(ts => ts.Votes, newVote));

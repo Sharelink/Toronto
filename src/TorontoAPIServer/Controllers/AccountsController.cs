@@ -51,12 +51,12 @@ namespace TorontoAPIServer.Controllers
 
         // PUT /Accounts/Name (name) : update my account birth properties
         [HttpPut("BirthDate")]
-        public void PutBirthDate(DateTime birthdate)
+        public void PutBirthDate(string birthdate)
         {
             var accountService = Startup.ServicesProvider.GetAccountService();
             if (birthdate != null)
             {
-                if (!accountService.ChangeAccountBirthday(UserSessionData.AccountId, birthdate))
+                if (!accountService.ChangeAccountBirthday(UserSessionData.AccountId, DateTimeUtil.ToDate(birthdate)))
                 {
                     Response.StatusCode = (int)HttpStatusCode.NotModified;
                 }

@@ -8,6 +8,11 @@ namespace TorontoModel.MongodbModel
 {
     public class SharelinkUser
     {
+        public SharelinkUser()
+        {
+            LinkedUsers = new SharelinkUserLink[0];
+            SharelinkTags = new ObjectId[0];
+        }
         public ObjectId Id { get; set; }
         public string AccountId { get; set; }
         public string NickName { get; set; }
@@ -22,6 +27,12 @@ namespace TorontoModel.MongodbModel
 
     public class ShareThing
     {
+        public ShareThing()
+        {
+            Votes = new Vote[0];
+            Tags = new string[0];
+        }
+
         public ObjectId Id { get; set; }
         public ObjectId UserId { get; set; }
         public ObjectId PShareId { get; set; }
@@ -74,6 +85,26 @@ namespace TorontoModel.MongodbModel
 
     public class SharelinkUserLink
     {
+        public enum LinkState
+        {
+            //Master
+            Asking = 1,
+            //Common
+            Linked = 2,
+            Removed = 3,
+            //Slave
+            WaitToAccept = 4
+        }
+
+        public class State
+        {
+            public int LinkState { get; set; }
+
+            public static State FromJson(string json)
+            {
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<State>(json);
+            }
+        }
         public ObjectId SlaveUserObjectId { get; set; }
         public string SlaveUserUserId { get { return SlaveUserObjectId.ToString(); } }
         public string SlaveUserNoteName { get; set; } //default = nickname

@@ -21,7 +21,7 @@ namespace TorontoAPIServer.Controllers
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var taskRes = Task.Run(() =>
             {
-                return sharelinkTagService.GetMyAllSharelinkTags();
+                return sharelinkTagService.GetMyAllSharelinkTags(UserSessionData.UserId);
             });
             var result = from t in taskRes.Result
                          select new
@@ -40,7 +40,7 @@ namespace TorontoAPIServer.Controllers
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var taskResult = Task.Run(() =>
             {
-                return sharelinkTagService.CreateNewSharelinkTag(tagName, tagColor);
+                return sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId,tagName, tagColor);
             });
             return new
             {
@@ -55,7 +55,7 @@ namespace TorontoAPIServer.Controllers
         public async void PutTagColor(string tagId,string tagColor)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            if(! await sharelinkTagService.UpdateSharelinkTagColor(tagId, tagColor))
+            if(! await sharelinkTagService.UpdateSharelinkTagColor(UserSessionData.UserId, tagId, tagColor))
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -66,7 +66,7 @@ namespace TorontoAPIServer.Controllers
         public async void PutTagName(string tagId, string tagName)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            if (!await sharelinkTagService.UpdateSharelinkTagName(tagId, tagName))
+            if (!await sharelinkTagService.UpdateSharelinkTagName(UserSessionData.UserId, tagId, tagName))
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -77,7 +77,7 @@ namespace TorontoAPIServer.Controllers
         public async void Delete(string tagId)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            if(! await sharelinkTagService.DeleteSharelinkTag(tagId))
+            if(! await sharelinkTagService.DeleteSharelinkTag(UserSessionData.UserId, tagId))
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }

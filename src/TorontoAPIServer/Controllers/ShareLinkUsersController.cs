@@ -20,17 +20,19 @@ namespace TorontoAPIServer.Controllers
         public object Get()
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskRes = Task.Run(() => { return userService.GetAllMyLinkedUsers(); });
-            return from u in taskRes.Result select new
+            var taskRes = Task.Run(() => { return userService.GetLinkedUsersOfUserId(UserSessionData.UserId); }).Result;
+            var result = from u in taskRes select new
             {
-                userId = u.Id.ToString() ,
+                userId = u.Id.ToString(),
                 nickName = u.NickName,
                 noteName = u.NoteName,
                 headIconId = u.HeadIcon,
-                personalVideoId = "",
+                personalVideoId = u.PersonalVideo,
                 createTime = DateTimeUtil.ToString(u.CreateTime),
                 signText = u.SignText
             };
+            var users = result.ToArray();
+            return users;
         }
 
         //GET /ShareLinkUsers/{id} : return the user of id
@@ -40,7 +42,7 @@ namespace TorontoAPIServer.Controllers
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             var taskResult = Task.Run(() => 
             {
-                return userService.GetMyLinkedUser(userId);
+                return userService.GetMyLinkedUser(UserSessionData.UserId, userId);
             });
             return taskResult.Result;
         }
@@ -52,7 +54,7 @@ namespace TorontoAPIServer.Controllers
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             var taskResult = Task.Run(() =>
             {
-                return userService.UpdateMyUserProfileNickName(nickName);
+                return userService.UpdateUserProfileNickName(UserSessionData.UserId,nickName);
             });
             return taskResult.Result;
             
@@ -65,7 +67,7 @@ namespace TorontoAPIServer.Controllers
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             var taskResult = Task.Run(() =>
             {
-                return userService.UpdateMyUserProfileSignText(signText);
+                return userService.UpdateUserProfileSignText(UserSessionData.UserId, signText);
             });
             return taskResult.Result;
 

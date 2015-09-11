@@ -26,18 +26,20 @@ namespace TorontoAPIServer.Controllers
         /// <param name="shareIds">filter, defalut nil</param>
         /// <returns></returns>
         [HttpGet]
-        public object Get(DateTime newerThanThisTime,DateTime olderThanThisTime,int page, int pageCount,string shareIds = null)
+        public object Get(string newerThanThisTime,string olderThanThisTime,int page, int pageCount,string shareIds = null)
         {
-            
+
+            DateTime newerTime = DateTimeUtil.ToDate(newerThanThisTime);
+            DateTime olderTime = DateTimeUtil.ToDate(olderThanThisTime);
             var service = this.UseShareService().GetShareService();
             var usrService = this.UseSharelinkUserService().GetSharelinkUserService();
             var things = Task.Run(() => {
-                return service.GetUserShareThings(newerThanThisTime, olderThanThisTime, page, pageCount);
+                return service.GetUserShareThings(UserSessionData.UserId, newerTime, olderTime, page, pageCount);
             }).Result;
             var userIds = from t in things select t.UserId.ToString();
             var users = Task.Run(() => 
             {
-                return usrService.GetMyLinkedUsers(userIds, true);
+                return usrService.GetUserLinkedUsers(UserSessionData.UserId, userIds, true);
             }).Result;
             var result = new object[things.Count];
             for (int i = 0; i < result.Length; i++)

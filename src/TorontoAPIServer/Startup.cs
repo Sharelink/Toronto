@@ -29,10 +29,12 @@ namespace TorontoAPIServer
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
             // Setup configuration sources.
+
             var builder = new ConfigurationBuilder(appEnv.ApplicationBasePath)
                 .AddJsonFile("config.json")
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
+
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
             APIUrl = Configuration["Data:ServiceUrl"] + "/api";

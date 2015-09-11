@@ -17,13 +17,13 @@ namespace TorontoAPIServer.Controllers
 
         //GET /UserLinks : get my all userlinks
         [HttpGet]
-        public object Get()
+        public object[] Get()
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
             var taskRes = Task.Run(() => {
-                return service.GetAllMyUserlinks();
+                return service.GetUserlinksOfUserId(UserSessionData.UserId);
             });
-            return from ul in taskRes.Result
+            var results =  from ul in taskRes.Result
                    select new
                    {
                        linkId = ul.SlaveUserUserId,
@@ -31,7 +31,7 @@ namespace TorontoAPIServer.Controllers
                        status = ul.StateDocument,
                        createTime = DateTimeUtil.ToString(ul.CreateTime)
                    };
-
+            return results.ToArray();
         }
 
         //PUT /UserLinks (myUserId,otherUserId,newState) : update my userlink status with other people
@@ -39,7 +39,7 @@ namespace TorontoAPIServer.Controllers
         public async void Put(string otherUserId, string newState)
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            if (!await service.UpdateMyUserlinkStateWithUser(otherUserId, newState))
+            if (!await service.UpdateUserlinkStateWithUser(UserSessionData.UserId, otherUserId, newState))
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -50,7 +50,7 @@ namespace TorontoAPIServer.Controllers
         public void Post(string otherUserId)
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            //service.CreateNewLinkWithOtherUser(otherUserId);
+            service.AskForLink(UserSessionData.UserId, otherUserId);
         }
     }
 }

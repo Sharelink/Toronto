@@ -20,7 +20,7 @@ namespace TorontoAPIServer.Controllers
         public async void Post(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            if (! await shareService.VoteShare(shareId))
+            if (! await shareService.VoteShare(UserSessionData.UserId, shareId))
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -31,7 +31,7 @@ namespace TorontoAPIServer.Controllers
         public async void Delete(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            if (!(await shareService.UnvoteShare(shareId)))
+            if (!(await shareService.UnvoteShare(UserSessionData.UserId, shareId)))
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
