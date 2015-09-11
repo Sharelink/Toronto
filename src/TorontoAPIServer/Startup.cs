@@ -9,10 +9,10 @@ using Microsoft.AspNet.Routing;
 using Microsoft.Framework.DependencyInjection;
 using TorontoAPIServer.Authentication;
 using Microsoft.Framework.Configuration;
-using Microsoft.Framework.Runtime;
 using BahamutService;
 using DataLevelDefines;
 using BahamutCommon;
+using Microsoft.Dnx.Runtime;
 
 namespace TorontoAPIServer
 {

@@ -2,11 +2,11 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BahamutService.Model;
 using BahamutCommon;
+using System.Collections.Generic;
+
 namespace TorontoService
 {
     public class SharelinkUserService
