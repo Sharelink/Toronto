@@ -33,11 +33,12 @@ namespace TorontoAPIServer
             var builder = new ConfigurationBuilder(appEnv.ApplicationBasePath)
                 .AddJsonFile("config.json")
                 .AddEnvironmentVariables();
+            builder.AddIniFile("hosting.ini").AddEnvironmentVariables();
             Configuration = builder.Build();
 
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
-            APIUrl = Configuration["Data:ServiceUrl"] + "/api";
+            APIUrl = Configuration["server.urls"] + "/api";
             TokenServerConfig = new RedisServerConfig()
             {
                 Db = long.Parse(Configuration["Data:TokenServer:Db"]),
