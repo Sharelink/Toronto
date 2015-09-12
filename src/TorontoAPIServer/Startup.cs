@@ -13,6 +13,8 @@ using BahamutService;
 using DataLevelDefines;
 using BahamutCommon;
 using Microsoft.Dnx.Runtime;
+using ServerControlService.Service;
+using ServerControlService.Model;
 
 namespace TorontoAPIServer
 {
@@ -26,6 +28,7 @@ namespace TorontoAPIServer
         public static IRedisServerConfig TokenServerConfig { get; private set; }
         public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
         public static string BahamutDBConnectionString { get; private set; }
+        public static IRedisServerConfig ControlRedisServerConfig { get; private set; }
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
             // Setup configuration sources.
@@ -51,6 +54,13 @@ namespace TorontoAPIServer
                 Url = Configuration["Data:SharelinkDBServer:Url"]
             };
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
+            ControlRedisServerConfig = new RedisServerConfig()
+            {
+                Db = long.Parse(Configuration["Data:ControlServiceServer:Db"]),
+                Host = Configuration["Data:ControlServiceServer:Host"],
+                Password = Configuration["Data:ControlServiceServer:Password"],
+                Port = int.Parse(Configuration["Data:ControlServiceServer:Port"])
+            };
         }
 
         // This method gets called by a runtime.
@@ -61,6 +71,7 @@ namespace TorontoAPIServer
 
             services.AddInstance(new TokenService(TokenServerConfig));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
+            services.AddInstance(new ServerControlManagementService(ControlRedisServerConfig));
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
             // services.AddWebApiConventions();
@@ -70,6 +81,16 @@ namespace TorontoAPIServer
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             ServicesProvider = app.ApplicationServices;
+
+            var serverMgrService = ServicesProvider.GetServerControlManagementService();
+            var appInstance = new BahamutAppInstance()
+            {
+                Appkey = Appkey,
+                InstanceServiceUrl = Configuration["server.urls"]
+            };
+            appInstance = serverMgrService.RegistAppInstance(appInstance);
+            serverMgrService.StartKeepAlive(appInstance.Id);
+
             app.UseMiddleware<BasicAuthentication>(Appkey);
             // Configure the HTTP request pipeline.
             app.UseStaticFiles();
@@ -86,6 +107,11 @@ namespace TorontoAPIServer
         public static BahamutAccountService GetAccountService(this IServiceProvider provider)
         {
             return provider.GetService<BahamutAccountService>();
+        }
+
+        public static ServerControlManagementService GetServerControlManagementService(this IServiceProvider provider)
+        {
+            return provider.GetService<ServerControlManagementService>();
         }
 
         public static TokenService GetTokenService(this IServiceProvider provider)
