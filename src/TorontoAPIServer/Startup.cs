@@ -15,6 +15,7 @@ using BahamutCommon;
 using Microsoft.Dnx.Runtime;
 using ServerControlService.Service;
 using ServerControlService.Model;
+using ServiceStack.Redis;
 
 namespace TorontoAPIServer
 {
@@ -42,25 +43,11 @@ namespace TorontoAPIServer
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
             APIUrl = Configuration["server.urls"] + "/api";
-            TokenServerConfig = new RedisServerConfig()
-            {
-                Db = long.Parse(Configuration["Data:TokenServer:Db"]),
-                Host = Configuration["Data:TokenServer:Host"],
-                Password = Configuration["Data:TokenServer:Password"],
-                Port = int.Parse(Configuration["Data:TokenServer:Port"])
-            };
             SharelinkDBConfig = new MongoDbServerConfig()
             {
                 Url = Configuration["Data:SharelinkDBServer:Url"]
             };
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
-            ControlRedisServerConfig = new RedisServerConfig()
-            {
-                Db = long.Parse(Configuration["Data:ControlServiceServer:Db"]),
-                Host = Configuration["Data:ControlServiceServer:Host"],
-                Password = Configuration["Data:ControlServiceServer:Password"],
-                Port = int.Parse(Configuration["Data:ControlServiceServer:Port"])
-            };
         }
 
         // This method gets called by a runtime.
@@ -69,9 +56,11 @@ namespace TorontoAPIServer
         {
             services.AddMvc();
 
-            services.AddInstance(new TokenService(TokenServerConfig));
+            var TokenServerClientManager = new RedisManagerPool(Configuration["Data:TokenServer:url"]);
+            var ControlServerServiceClientManager = new RedisManagerPool(Configuration["Data:ControlServiceServer:url"]);
+            services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
+            services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
-            services.AddInstance(new ServerControlManagementService(ControlRedisServerConfig));
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
             // services.AddWebApiConventions();
