@@ -17,6 +17,12 @@
 
   "frameworks": {
     "dnx451": { }
+    "dnx451": {
+      "dependencies": {
+        "ServerControlService": "1.0.0-*",
+        "TorontoService": "1.0.0-*"
+      }
+    }
   },
 
   "exclude": [
