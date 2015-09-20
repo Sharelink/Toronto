@@ -17,10 +17,14 @@ namespace TorontoAPIServer.Controllers
 
         //POST /Votes/{shareId} : vote sharething of shareId
         [HttpPost("{shareId}")]
-        public async void Post(string shareId)
+        public void Post(string shareId)
         {
-            var shareService = this.UseShareService().GetShareService();
-            if (! await shareService.VoteShare(UserSessionData.UserId, shareId))
+            var isSuc = Task.Run(async () =>
+            {
+                var shareService = this.UseShareService().GetShareService();
+                return await shareService.VoteShare(UserSessionData.UserId, shareId);
+            }).Result;
+            if(!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -28,10 +32,14 @@ namespace TorontoAPIServer.Controllers
 
         //DELETE /Votes/{shareId} : vote sharething of shareId
         [HttpDelete("{shareId}")]
-        public async void Delete(string shareId)
+        public void Delete(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            if (!(await shareService.UnvoteShare(UserSessionData.UserId, shareId)))
+            var isSuc = Task.Run(async () =>
+            {
+                return await shareService.UnvoteShare(UserSessionData.UserId, shareId);
+            }).Result;
+            if (!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }

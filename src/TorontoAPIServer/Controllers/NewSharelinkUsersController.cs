@@ -17,7 +17,7 @@ namespace TorontoAPIServer.Controllers
     {
         // POST api/values
         [HttpPost]
-        public object Post(string accountId, string accessToken,string nickName)
+        public object Post(string accountId, string accessToken,string nickName,string signText)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             if (tokenService.ValidateToGetSessionData(Startup.Appkey,accountId,accessToken) != null)
@@ -28,6 +28,7 @@ namespace TorontoAPIServer.Controllers
                     NickName = nickName,
                     CreateTime = DateTime.Now,
                     NoteName = nickName,
+                    SignText = signText
                 };
                 var userService = this.UseSharelinkUserService().GetSharelinkUserService();
                 var taskResult = Task.Run(async () =>

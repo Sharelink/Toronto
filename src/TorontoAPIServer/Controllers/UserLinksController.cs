@@ -26,8 +26,8 @@ namespace TorontoAPIServer.Controllers
             var results =  from ul in taskRes.Result
                    select new
                    {
-                       linkId = ul.SlaveUserUserId,
-                       slaveUserId = ul.SlaveUserUserId,
+                       linkId = ul.SlaveUserObjectId.ToString(),
+                       slaveUserId = ul.SlaveUserObjectId.ToString(),
                        status = ul.StateDocument,
                        createTime = DateTimeUtil.ToString(ul.CreateTime)
                    };
@@ -35,11 +35,30 @@ namespace TorontoAPIServer.Controllers
         }
 
         //PUT /UserLinks (myUserId,otherUserId,newState) : update my userlink status with other people
-        [HttpPut]
-        public async void Put(string otherUserId, string newState)
+        [HttpPut("NoteName")]
+        public void PutUpdateNoteName(string userId, string newNoteName)
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            if (!await service.UpdateUserlinkStateWithUser(UserSessionData.UserId, otherUserId, newState))
+            var suc = Task.Run(async () =>
+            {
+                return await service.UpdateLinkedUserNoteName(UserSessionData.UserId, userId, newNoteName);
+            }).Result;
+            if(!suc)
+            {
+                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            }
+        }
+
+        //PUT /UserLinks (myUserId,otherUserId,newState) : update my userlink status with other people
+        [HttpPut]
+        public void Put(string userId, string newState)
+        {
+            var service = this.UseSharelinkUserService().GetSharelinkUserService();
+            var suc = Task.Run(async () =>
+            {
+                return await service.UpdateUserlinkStateWithUser(UserSessionData.UserId, userId, newState);
+            }).Result;
+            if (!suc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }

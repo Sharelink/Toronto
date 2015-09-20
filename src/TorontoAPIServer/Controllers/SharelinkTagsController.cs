@@ -28,45 +28,42 @@ namespace TorontoAPIServer.Controllers
                          {
                              tagId = t.Id.ToString(),
                              tagName = t.TagName,
-                             tagColor = t.TagColor
+                             tagColor = t.TagColor,
+                             data = t.Data,
+                             isFocus = t.IsFocus
                          };
             return result;
         }
 
-        // POST /SharelinkTags (tagName,tagColor):add a new user tag to my tags collection
+        // POST /SharelinkTags (tagName,tagColor,data,isFocus):add a new user tag to my tags collection
         [HttpPost]
-        public object Post(string tagName, string tagColor)
+        public object Post(string tagName, string tagColor,string data,string isFocus)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var taskResult = Task.Run(() =>
             {
-                return sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId,tagName, tagColor);
+                return sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId, tagName, tagColor, data, isFocus);
             });
             return new
             {
                 tagId = taskResult.Result.Id.ToString(),
                 tagName = taskResult.Result.TagName,
-                tagColor = taskResult.Result.TagColor
+                tagColor = taskResult.Result.TagColor,
+                data = taskResult.Result.Data,
+                isFocus = taskResult.Result.IsFocus
             };
         }
 
-        // PUT /SharelinkTags/{tagId}/{tagColor}: update tag color property
-        [HttpPut("{tagId}/{tagColor}")]
-        public async void PutTagColor(string tagId,string tagColor)
+        // PUT /SharelinkTags/{tagId}: update tag property
+        [HttpPut("{tagId}")]
+        public void PutTag(string tagId, string tagName, string tagColor, string data, string isFocus)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            if(! await sharelinkTagService.UpdateSharelinkTagColor(UserSessionData.UserId, tagId, tagColor))
+            var isSuc = Task.Run(async () =>
             {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            }
-        }
-
-        // PUT /SharelinkTags/{tagId}/{tagName}: update tag name property
-        [HttpPut("{tagId}/{tagName}")]
-        public async void PutTagName(string tagId, string tagName)
-        {
-            var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            if (!await sharelinkTagService.UpdateSharelinkTagName(UserSessionData.UserId, tagId, tagName))
+                return await sharelinkTagService.UpdateSharelinkTag(UserSessionData.UserId, tagId, tagName, tagColor, data, isFocus);
+            }).Result;
+            if (!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -74,10 +71,14 @@ namespace TorontoAPIServer.Controllers
 
         // DELETE /SharelinkTags (tagId) : delete the tag,and all the user has link to this tag will be dislink
         [HttpDelete("{tagId}")]
-        public async void Delete(string tagId)
+        public void Delete(string tagId)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            if(! await sharelinkTagService.DeleteSharelinkTag(UserSessionData.UserId, tagId))
+            var isSuc = Task.Run(async () =>
+            {
+                return await sharelinkTagService.DeleteSharelinkTag(UserSessionData.UserId, tagId);
+            }).Result;
+            if (!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }

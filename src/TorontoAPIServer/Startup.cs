@@ -25,6 +25,7 @@ namespace TorontoAPIServer
         public static IServiceProvider ServicesProvider { get; private set; }
         public static string Appkey { get; private set; }
         public static string Appname { get; private set; }
+        public static string Server { get; set; }
         public static string APIUrl { get; private set; }
         public static IRedisServerConfig TokenServerConfig { get; private set; }
         public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
@@ -43,6 +44,7 @@ namespace TorontoAPIServer
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
             APIUrl = Configuration["server.urls"] + "/api";
+            Server = Configuration["server.urls"];
             SharelinkDBConfig = new MongoDbServerConfig()
             {
                 Url = Configuration["Data:SharelinkDBServer:Url"]

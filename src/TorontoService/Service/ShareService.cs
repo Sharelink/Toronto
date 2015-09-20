@@ -91,7 +91,7 @@ namespace TorontoService
             var me = await userCollection.Find(u => u.Id == uOId).FirstAsync();
 
             //TODO:Cache this
-            var linkedUserIds = from lu in me.LinkedUsers select lu.SlaveUserObjectId;
+            var linkedUserIds = me.LinkedUsers;
 
             var result = from v in share.Votes where linkedUserIds.Contains(v.UserId) select v;
             return result.ToList();

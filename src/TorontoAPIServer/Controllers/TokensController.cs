@@ -46,7 +46,7 @@ namespace TorontoAPIServer.Controllers
             {
                 return new
                 {
-                    RegistAPIServer = "http://192.168.0.168:8088"
+                    RegistAPIServer = Startup.Server
                 };
             }
             catch (Exception)

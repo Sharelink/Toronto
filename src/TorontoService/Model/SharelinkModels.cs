@@ -10,7 +10,7 @@ namespace TorontoModel.MongodbModel
     {
         public SharelinkUser()
         {
-            LinkedUsers = new SharelinkUserLink[0];
+            LinkedUsers = new ObjectId[0];
             SharelinkTags = new ObjectId[0];
         }
         public ObjectId Id { get; set; }
@@ -21,7 +21,7 @@ namespace TorontoModel.MongodbModel
         public string HeadIcon { get; set; }
         public string PersonalVideo { get; set; }
         public string SignText { get; set; }
-        public SharelinkUserLink[] LinkedUsers { get; set; }
+        public ObjectId[] LinkedUsers { get; set; }
         public ObjectId[] SharelinkTags { get; set; }
     }
 
@@ -61,6 +61,8 @@ namespace TorontoModel.MongodbModel
         public ObjectId UserId { set; get; }
         public string TagName { get; set; }
         public string TagColor { get; set; }
+        public string Data { get; set; }
+        public bool IsFocus { get; set; }
     }
 
     public class ShareContent
@@ -105,8 +107,9 @@ namespace TorontoModel.MongodbModel
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<State>(json);
             }
         }
+        public ObjectId Id { get; set; }
+        public ObjectId MasterUserObjectId { get; set; }
         public ObjectId SlaveUserObjectId { get; set; }
-        public string SlaveUserUserId { get { return SlaveUserObjectId.ToString(); } }
         public string SlaveUserNoteName { get; set; } //default = nickname
         public string StateDocument { get; set; }
         public DateTime CreateTime { get; set; }

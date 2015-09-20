@@ -33,7 +33,7 @@ namespace TorontoService
             var linkedUsers = await (await collection.FindAsync(usr => linkedUserIds.Contains(usr.Id))).ToListAsync();
             if (useNoteName)
             {
-                var linkMap = links.ToDictionary(lu => lu.SlaveUserUserId);
+                var linkMap = links.ToDictionary(lu => lu.SlaveUserObjectId.ToString());
                 for (int i = 0; i < linkedUsers.Count; i++)
                 {
                     linkedUsers[i].NoteName = linkMap[linkedUsers[i].Id.ToString()].SlaveUserNoteName;
@@ -90,8 +90,10 @@ namespace TorontoService
         public async Task<IList<SharelinkUserLink>> GetUserlinksOfUserId(string userId)
         {
             var user = await GetUserOfUserId(userId);
+            var linkCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
+            var linkedUsers = linkCollection.Find(usr => user.LinkedUsers.Contains(usr.Id));
             //TODO:Cache this
-            return user.LinkedUsers;
+            return await linkedUsers.ToListAsync();
         }
 
         public SharelinkUserLink AskForLink(string masterUserId, string otherUserId)
@@ -116,25 +118,48 @@ namespace TorontoService
         {
             var mUOId = new ObjectId(masterUserId);
             var otherUser = Task.Run(() => { return GetUserOfUserId(otherUserId); }).Result;
+            var linkCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
             var newLink = new SharelinkUserLink()
             {
                 CreateTime = DateTime.Now,
                 StateDocument = state.ToJson(),
+                MasterUserObjectId = mUOId,
                 SlaveUserObjectId = otherUser.Id,
                 SlaveUserNoteName = otherUser.NickName
             };
-            var update = new UpdateDefinitionBuilder<SharelinkUser>().AddToSet(slu => slu.LinkedUsers, newLink);
+
+            Task.Run(async () =>
+            {
+                await linkCollection.InsertOneAsync(newLink);
+            });
+            
+            var update = new UpdateDefinitionBuilder<SharelinkUser>().Push(slu => slu.LinkedUsers, newLink.Id);
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             collection.UpdateOneAsync(slu => slu.Id == mUOId, update);
             return newLink;
         }
 
+        public async Task<bool> UpdateLinkedUserNoteName(string masterUserId, string otherUserId, string noteName)
+        {
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
+            var mUOId = new ObjectId(masterUserId);
+            var oUId = new ObjectId(otherUserId);
+            var update = new UpdateDefinitionBuilder<SharelinkUserLink>();
+
+            var result = await collection.UpdateOneAsync(u => u.MasterUserObjectId == mUOId && u.SlaveUserObjectId == oUId
+            , update.Set(u => u.SlaveUserNoteName, noteName));
+            return result.ModifiedCount > 0;
+        }
+
         public async Task<bool> UpdateUserlinkStateWithUser(string masterUserId, string otherUserId, string state)
         {
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
             var mUOId = new ObjectId(masterUserId);
-            var result = await collection.UpdateOneAsync(u => u.Id == mUOId, new UpdateDefinitionBuilder<SharelinkUser>().
-                Set(usr => (from ul in usr.LinkedUsers where ul.SlaveUserUserId == otherUserId select ul).First().StateDocument, state));
+            var oUId = new ObjectId(otherUserId);
+            var update = new UpdateDefinitionBuilder<SharelinkUserLink>();
+
+            var result = await collection.UpdateOneAsync(u => u.MasterUserObjectId == mUOId && u.SlaveUserObjectId == oUId
+            , update.Set(u => u.StateDocument, state));
             return result.ModifiedCount > 0;
         }
 

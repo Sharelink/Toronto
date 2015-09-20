@@ -20,13 +20,20 @@ namespace TorontoAPIServer.Controllers
         {
             var service = this.UseSharelinkTagService().GetSharelinkTagService();
             var taskResult = Task.Run(() => { return service.GetUserSharelinkTags(linkedUserId); });
-            return from t in taskResult.Result
+            var tags = from t in taskResult.Result where t.IsFocus
                    select new
                    {
                        tagId = t.Id.ToString(),
                        tagName = t.TagName,
-                       tagColor = t.TagColor
+                       tagColor = t.TagColor,
+                       data = t.Data,
+                       isFocus = t.IsFocus
                    };
+            return new
+            {
+                userId = linkedUserId,
+                tags = tags
+            };
         }
 
     }
