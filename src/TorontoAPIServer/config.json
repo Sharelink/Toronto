@@ -5,17 +5,17 @@
       "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b"
     },
     "SharelinkDBServer": {
-      "Url": "mongodb://192.168.0.23:27017"
+      "Url": "mongodb://192.168.1.23:27017"
     },
     "BahamutDBConnection": {
-      "connectionString": "server=192.168.0.23;user id=root;password=dfyybest;persistsecurityinfo=True;database=BahamutDB;Pooling=true; Max Pool Size=50;"
+      "connectionString": "server=192.168.1.23;user id=root;password=dfyybest;persistsecurityinfo=True;database=BahamutDB;Pooling=true; Max Pool Size=50;"
     },
     "TokenServer": {
-      "url": "redis://192.168.0.23:6379"
+      "url": "redis://192.168.1.23:6379"
     },
 
     "ControlServiceServer": {
-      "url": "redis://192.168.0.23:6379"
+      "url": "redis://192.168.1.23:6379"
     }
   }
   
