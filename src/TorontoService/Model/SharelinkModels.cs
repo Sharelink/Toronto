@@ -38,8 +38,8 @@ namespace TorontoModel.MongodbModel
         public ObjectId PShareId { get; set; }
         public DateTime ShareTime { get; set; }
         public string Title { get; set; }
-        public ShareContent ShareContent { get; set; }
-        public ObjectId ShareType { get; set; }
+        public string ShareContent { get; set; }
+        public string ShareType { get; set; }
         public Vote[] Votes { get; set; }
         public string[] Tags { get; set; }
         public DateTime LastActiveTime { get; set; }
@@ -63,20 +63,7 @@ namespace TorontoModel.MongodbModel
         public string TagColor { get; set; }
         public string Data { get; set; }
         public bool IsFocus { get; set; }
-    }
-
-    public class ShareContent
-    {
-        public ObjectId ContentId { get; set; }
-        public ShareType Type { get; set; }
-        public string ContentDocument { get; set; }
-    }
-
-    public class ShareType
-    {
-        public ObjectId Id { get; set; }
-        public string ShareTypeDocument { get; set; }
-
+        public DateTime LastActiveTime { get; set; }
     }
 
     public class Vote
@@ -95,7 +82,8 @@ namespace TorontoModel.MongodbModel
             Linked = 2,
             Removed = 3,
             //Slave
-            WaitToAccept = 4
+            WaitToAccept = 4,
+            Rejected = 5
         }
 
         public class State

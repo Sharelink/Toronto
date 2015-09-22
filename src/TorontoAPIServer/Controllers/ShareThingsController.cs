@@ -41,6 +41,27 @@ namespace TorontoAPIServer.Controllers
             {
                 return usrService.GetUserLinkedUsers(UserSessionData.UserId, userIds, true);
             }).Result;
+
+            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
+            foreach (var u in users)
+            {
+                var userId = u.Value.Id.ToString();
+                var focusTags = tagService.GetUserFocusTags(userId).Result;
+                var newFocusTags = from f in focusTags where f.LastActiveTime > newerTime select f;
+                
+                if(newFocusTags.Count() > 0)
+                {
+                    var tag = newFocusTags.ElementAt(0);
+                    things.Insert(0, new ShareThing()
+                    {
+                        LastActiveTime = tag.LastActiveTime,
+                        ShareType = "message",
+                        UserId = u.Value.Id,
+                        ShareContent = tag.TagName
+                    });
+                }
+            }
+            
             var result = new object[things.Count];
             for (int i = 0; i < result.Length; i++)
             {
@@ -58,7 +79,6 @@ namespace TorontoAPIServer.Controllers
                     shareType = thing.ShareType.ToString(),
                     title = thing.Title,
                     shareContent = thing.ShareContent,
-                    //reShares:[ShareThing]!
                     voteUsers = (from v in thing.Votes select v.UserId.ToString()).ToArray(),
                     lastActiveTime = DateTimeUtil.ToString(thing.LastActiveTime),
                     forTags = thing.Tags
@@ -79,29 +99,26 @@ namespace TorontoAPIServer.Controllers
             return service.GetShareThingReshares(shareId);
         }
 
-        // POST /ShareThings (pshareid,sharetitle,sharetypeid,shareContent) : post a new share,if pshareid equals 0, means not a reshare action
+        // POST /ShareThings (pShareId, title, shareType,tags, shareContent) : post a new share,if pshareid equals 0, means not a reshare action
         [HttpPost]
-        public object Post(string pShareId, string shareTitle, string shareTypeId,string tagIds, string shareContent)
+        public object Post(string pShareId, string title, string shareType,string tags, string shareContent)
         {
             var service = this.UseShareService().GetShareService();
             var newShare = new ShareThing()
             {
                 PShareId = new ObjectId(pShareId),
                 ShareTime = DateTime.Now,
-                Title = shareTitle,
+                Title = title,
                 UserId = new ObjectId(UserSessionData.UserId),
-                
-                ShareContent = new ShareContent()
-                {
-                    ContentDocument = shareContent,
-                    Type = new ShareType()
-                    {
-                        Id = new ObjectId(shareTypeId)
-                    }
-                }
+                ShareType = shareType,
+                ShareContent = shareContent,
+                Tags = tags.Split('#')
             };
-            var itemWithId = service.PostNewShareThing(newShare);
-            return new { ShareId = itemWithId.Id.ToString() };
+            var itemWithId = Task.Run(async () =>
+            {
+                return await service.PostNewShareThing(newShare);
+            }).Result;
+            return new { shareId = itemWithId.Id.ToString() };
         }
 
     }

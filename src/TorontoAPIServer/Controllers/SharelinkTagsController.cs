@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using TorontoService;
 using TorontoModel.MongodbModel;
 using System.Net;
+using MongoDB.Bson;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -40,18 +41,23 @@ namespace TorontoAPIServer.Controllers
         public object Post(string tagName, string tagColor,string data,string isFocus)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var taskResult = Task.Run(() =>
+            var shareService = this.UseShareService().GetShareService();
+            var taskResult = Task.Run(async () =>
             {
-                return sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId, tagName, tagColor, data, isFocus);
-            });
-            return new
+               
+                var r = await sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId, tagName, tagColor, data, isFocus);
+                return r;
+            }).Result;
+            var res = new
             {
-                tagId = taskResult.Result.Id.ToString(),
-                tagName = taskResult.Result.TagName,
-                tagColor = taskResult.Result.TagColor,
-                data = taskResult.Result.Data,
-                isFocus = taskResult.Result.IsFocus
+                tagId = taskResult.Id.ToString(),
+                tagName = taskResult.TagName,
+                tagColor = taskResult.TagColor,
+                data = taskResult.Data,
+                isFocus = taskResult.IsFocus
             };
+            
+            return res;
         }
 
         // PUT /SharelinkTags/{tagId}: update tag property
@@ -69,14 +75,15 @@ namespace TorontoAPIServer.Controllers
             }
         }
 
-        // DELETE /SharelinkTags (tagId) : delete the tag,and all the user has link to this tag will be dislink
-        [HttpDelete("{tagId}")]
-        public void Delete(string tagId)
+        // DELETE /SharelinkTags (tagIds) : delete the tag,and all the user has link to this tag will be dislink
+        [HttpDelete]
+        public void Delete(string tagIds)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
+            var ids = tagIds.Split('#');
             var isSuc = Task.Run(async () =>
             {
-                return await sharelinkTagService.DeleteSharelinkTag(UserSessionData.UserId, tagId);
+                return await sharelinkTagService.DeleteSharelinkTags(UserSessionData.UserId, ids);
             }).Result;
             if (!isSuc)
             {

@@ -19,15 +19,22 @@ namespace TorontoService
             Client = client;
         }
 
-        public async Task<IList<SharelinkTag>> GetUserSharelinkTags(string UserId)
+        public async Task<IList<SharelinkTag>> GetUserSharelinkTags(string userId)
         {
-            var userOId = new ObjectId(UserId);
+            var userOId = new ObjectId(userId);
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             var me = await collection.Find(u => u.Id == userOId).FirstAsync();
-
+            var tagIds = me.SharelinkTags;
             //Cache this data
-            return await collectionTag.Find(ul => me.SharelinkTags.Contains(ul.Id)).ToListAsync();
+            return await collectionTag.Find(ul => tagIds.Contains(ul.Id)).ToListAsync();
+        }
+
+        public async Task<IList<SharelinkTag>> GetUserFocusTags(string userId)
+        {
+            var tags = await GetUserSharelinkTags(userId);
+            var result = from t in tags where t.IsFocus select t;
+            return result.ToList();
         }
 
         public async Task<IList<SharelinkTag>> GetMyAllSharelinkTags(string userId)
@@ -37,17 +44,20 @@ namespace TorontoService
 
         public async Task<SharelinkTag> CreateNewSharelinkTag(string userId,string tagName, string tagColor, string data,string isFocus)
         {
+            var uId = new ObjectId(userId);
             var newTag = new SharelinkTag()
             {
                 TagColor = tagColor,
                 TagName = tagName,
                 Data = data,
-                IsFocus = isFocus == null ? false : bool.Parse(isFocus)
+                IsFocus = isFocus == null ? false : bool.Parse(isFocus),
+                UserId = uId,
+                LastActiveTime = DateTime.Now
             };
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             await collectionTag.InsertOneAsync(newTag);
-            var res = await collection.UpdateOneAsync(u => u.Id == new ObjectId(userId),
+            var res = await collection.UpdateOneAsync(u => u.Id == uId, 
                 new UpdateDefinitionBuilder<SharelinkUser>().AddToSet(su => su.SharelinkTags, newTag.Id));
             return newTag;
         }
@@ -59,29 +69,41 @@ namespace TorontoService
             var me = await collection.Find(u => u.Id == new ObjectId(userId)).FirstAsync();
             var tagOId = new ObjectId(tagId);
             var update = new UpdateDefinitionBuilder<SharelinkTag>();
+            var uList = new List<UpdateDefinition<SharelinkTag>>();
             if (!string.IsNullOrWhiteSpace(newTagName))
             {
-                update.Set(tt => tt.TagName, newTagName);
+                var u = update.Set(tt => tt.TagName, newTagName);
+                uList.Add(u);
             }
 
             if (!string.IsNullOrWhiteSpace(newColor))
             {
-                update.Set(tt => tt.TagColor, newColor);
+                var u = update.Set(tt => tt.TagColor, newColor);
+                uList.Add(u);
             }
 
             if (data != null)
             {
-                update.Set(t => t.Data, data);
+                var u = update.Set(t => t.Data, data);
+                uList.Add(u);
             }
 
             if (isFocus != null)
             {
-                update.Set(t => t.IsFocus, bool.Parse(isFocus));
+                var u = update.Set(t => t.IsFocus, bool.Parse(isFocus));
+                uList.Add(u);
+                
+            }
+
+            if (isFocus != null || !string.IsNullOrWhiteSpace(newTagName))
+            {
+                var u = update.Set(tt => tt.LastActiveTime, DateTime.Now);
+                uList.Add(u);
             }
 
             if (me.SharelinkTags.Contains(tagOId))
             {
-                var result = await collectionTag.UpdateOneAsync(t => t.Id == tagOId, update.Combine());
+                var result = await collectionTag.UpdateOneAsync(t => t.Id == tagOId, update.Combine(uList));
                 return result.ModifiedCount > 0;
             }
             else
@@ -96,13 +118,13 @@ namespace TorontoService
             return from mt in userShareLinkTags select mt.TagName;
         }
 
-        public async Task<bool> DeleteSharelinkTag(string userId, string tagId)
+        public async Task<bool> DeleteSharelinkTags(string userId, string[] tagIds)
         {
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionLink = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
-
-            var res = await collection.UpdateOneAsync(u => u.Id == new ObjectId(userId),
-                new UpdateDefinitionBuilder<SharelinkUser>().Pull(su => su.SharelinkTags, new ObjectId(tagId)));
+            var ids = from id in tagIds select new ObjectId(id);
+            var update = new UpdateDefinitionBuilder<SharelinkUser>().PullAll(u => u.SharelinkTags, ids);  
+            var res = await collection.UpdateOneAsync(u => u.Id == new ObjectId(userId),update);
             return res.ModifiedCount > 0;
         }
 

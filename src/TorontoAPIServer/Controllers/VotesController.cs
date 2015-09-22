@@ -22,6 +22,7 @@ namespace TorontoAPIServer.Controllers
             var isSuc = Task.Run(async () =>
             {
                 var shareService = this.UseShareService().GetShareService();
+                shareService.MarkARecordForShareThing(new MongoDB.Bson.ObjectId(shareId), new MongoDB.Bson.ObjectId(UserSessionData.UserId), "vote");
                 return await shareService.VoteShare(UserSessionData.UserId, shareId);
             }).Result;
             if(!isSuc)

@@ -6,6 +6,8 @@ using Microsoft.AspNet.Mvc;
 using TorontoService;
 using System.Net;
 using BahamutCommon;
+using TorontoModel.MongodbModel;
+using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -28,7 +30,7 @@ namespace TorontoAPIServer.Controllers
                    {
                        linkId = ul.SlaveUserObjectId.ToString(),
                        slaveUserId = ul.SlaveUserObjectId.ToString(),
-                       status = ul.StateDocument,
+                       status = SharelinkUserLink.State.FromJson(ul.StateDocument).LinkState.ToString(),
                        createTime = DateTimeUtil.ToString(ul.CreateTime)
                    };
             return results.ToArray();
@@ -56,7 +58,8 @@ namespace TorontoAPIServer.Controllers
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
             var suc = Task.Run(async () =>
             {
-                return await service.UpdateUserlinkStateWithUser(UserSessionData.UserId, userId, newState);
+                var ns = new SharelinkUserLink.State() { LinkState = int.Parse(newState) };
+                return await service.UpdateUserlinkStateWithUser(UserSessionData.UserId, userId,JsonConvert.SerializeObject(ns));
             }).Result;
             if (!suc)
             {

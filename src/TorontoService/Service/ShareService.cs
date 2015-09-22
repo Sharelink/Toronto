@@ -19,9 +19,12 @@ namespace TorontoService
             Client = client;
         }
 
-        public ShareThing PostNewShareThing(ShareThing newShareThing)
+        public async Task<ShareThing> PostNewShareThing(ShareThing newShareThing)
         {
-            return null;
+            var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
+            await shareThingCollection.InsertOneAsync(newShareThing);
+            MarkARecordForShareThing(newShareThing.Id, newShareThing.UserId);
+            return newShareThing;
         }
 
         public async void MarkARecordForShareThing(ObjectId shareId, ObjectId userId, string operate = "mark")
@@ -64,7 +67,8 @@ namespace TorontoService
                 records = await activeRecordCollection.Find(inFilter & timeOldFilter).ToListAsync();
             }
 
-            var sInFilter = new FilterDefinitionBuilder<ShareThing>().In("Id", records) & new FilterDefinitionBuilder<ShareThing>().AnyIn("Tags", myTags);
+            var sInFilter = new FilterDefinitionBuilder<ShareThing>().In("Id",from r in records select r.ShareId) & (new FilterDefinitionBuilder<ShareThing>().AnyIn("Tags", myTags)
+                | new FilterDefinitionBuilder<ShareThing>().AnyEq("Tags", "all"));
             var result = await shareThingCollection.Find(sInFilter).ToListAsync();
             for (int i = 0; i < result.Count; i++)
             {

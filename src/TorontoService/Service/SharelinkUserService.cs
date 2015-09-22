@@ -51,7 +51,10 @@ namespace TorontoService
             foreach (var item in linkedUserIds)
             {
                 var usr = userDict[item];
-                result.Add(item, usr);
+                if(!result.ContainsKey(item))
+                {
+                    result.Add(item, usr);
+                }
             }
             return result;
         }
