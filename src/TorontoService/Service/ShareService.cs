@@ -111,7 +111,7 @@ namespace TorontoService
                 UserId = new ObjectId(userId),
                 VoteTime = DateTime.Now
             };
-            var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().AddToSet(ts => ts.Votes, newVote));
+            var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().Push(ts => ts.Votes, newVote));
 
             return result.ModifiedCount > 0;
         }

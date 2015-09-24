@@ -54,7 +54,7 @@ namespace TorontoAPIServer.Controllers
                 tagName = taskResult.TagName,
                 tagColor = taskResult.TagColor,
                 data = taskResult.Data,
-                isFocus = taskResult.IsFocus
+                isFocus = taskResult.IsFocus.ToString().ToLower()
             };
             
             return res;
