@@ -36,27 +36,28 @@ namespace TorontoAPIServer.Controllers
             var things = Task.Run(() => {
                 return service.GetUserShareThings(UserSessionData.UserId, newerTime, olderTime, page, pageCount);
             }).Result;
-            var userIds = from t in things select t.UserId.ToString();
             var users = Task.Run(() => 
             {
-                return usrService.GetUserLinkedUsers(UserSessionData.UserId, userIds, true);
+                return usrService.GetUserLinkedUsers(UserSessionData.UserId);
             }).Result;
 
             var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             foreach (var u in users)
             {
-                var userId = u.Value.Id.ToString();
-                var focusTags = tagService.GetUserFocusTags(userId).Result;
-                var newFocusTags = from f in focusTags where f.LastActiveTime > newerTime select f;
+                var userId = u.Value.Id;
+                var focusTags = tagService.GetUserFocusTags(userId.ToString()).Result;
+                var newFocusTags = from f in focusTags where f.LastActiveTime < olderTime && f.LastActiveTime > newerTime orderby f.LastActiveTime descending select f;
                 
                 if(newFocusTags.Count() > 0)
                 {
                     var tag = newFocusTags.ElementAt(0);
                     things.Insert(0, new ShareThing()
                     {
+                        Id = userId,
                         LastActiveTime = tag.LastActiveTime,
+                        ShareTime = tag.LastActiveTime,
                         ShareType = "message",
-                        UserId = u.Value.Id,
+                        UserId = userId,
                         ShareContent = tag.TagName
                     });
                 }
@@ -73,7 +74,7 @@ namespace TorontoAPIServer.Controllers
                     shareId = thing.Id.ToString(),
                     pShareId = thing.PShareId.ToString(),
                     userId = uId,
-                    userNick = user.NickName,
+                    userNick = user.NoteName,
                     headIconImageId = user.HeadIcon,
                     shareTime = DateTimeUtil.ToString(thing.ShareTime),
                     shareType = thing.ShareType.ToString(),
@@ -106,7 +107,6 @@ namespace TorontoAPIServer.Controllers
             var service = this.UseShareService().GetShareService();
             var newShare = new ShareThing()
             {
-                PShareId = new ObjectId(pShareId),
                 ShareTime = DateTime.Now,
                 Title = title,
                 UserId = new ObjectId(UserSessionData.UserId),
@@ -114,6 +114,10 @@ namespace TorontoAPIServer.Controllers
                 ShareContent = shareContent,
                 Tags = tags.Split('#')
             };
+            if (pShareId != null)
+            {
+                newShare.PShareId = new ObjectId(pShareId);
+            }
             var itemWithId = Task.Run(async () =>
             {
                 return await service.PostNewShareThing(newShare);

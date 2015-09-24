@@ -27,6 +27,7 @@ namespace TorontoAPIServer
         public static string Appname { get; private set; }
         public static string Server { get; set; }
         public static string APIUrl { get; private set; }
+        public static string FileApiUrl { get; private set; }
         public static IRedisServerConfig TokenServerConfig { get; private set; }
         public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
         public static string BahamutDBConnectionString { get; private set; }
@@ -40,7 +41,7 @@ namespace TorontoAPIServer
                 .AddEnvironmentVariables();
             builder.AddIniFile("hosting.ini").AddEnvironmentVariables();
             Configuration = builder.Build();
-
+            FileApiUrl = "http://192.168.1.67:8089";
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
             APIUrl = Configuration["server.urls"] + "/api";

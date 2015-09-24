@@ -42,11 +42,17 @@ namespace TorontoService
             return linkedUsers;
         }
 
-        public async Task<IDictionary<string, SharelinkUser>> GetUserLinkedUsers(string userId,IEnumerable<string> linkedUserIds,bool useNoteName = true)
+        public async Task<IDictionary<string, SharelinkUser>> GetUserLinkedUsers(string userId,IEnumerable<string> linkedUserIds = null,bool useNoteName = true)
         {
             var users = await GetLinkedUsersOfUserId(userId, useNoteName);
             
             var userDict = users.ToDictionary(u => u.Id.ToString());
+
+            if (linkedUserIds == null)
+            {
+                return userDict;
+            }
+
             var result = new Dictionary<string, SharelinkUser>();
             foreach (var item in linkedUserIds)
             {

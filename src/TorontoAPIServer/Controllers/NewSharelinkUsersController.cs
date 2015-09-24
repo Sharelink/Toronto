@@ -45,7 +45,7 @@ namespace TorontoAPIServer.Controllers
                     AppToken = sessionData.UserSessionData.AppToken,
                     UserId = sessionData.UserSessionData.UserId,
                     APIServer = Startup.APIUrl,
-                    FileAPIServer = "http://192.168.0.168:8089/api"
+                    FileAPIServer = Startup.FileApiUrl
                 };
             }
             else

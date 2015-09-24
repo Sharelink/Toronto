@@ -23,8 +23,8 @@ namespace TorontoAPIServer.Controllers
             var taskRes = Task.Run(() =>
             {
                 return sharelinkTagService.GetMyAllSharelinkTags(UserSessionData.UserId);
-            });
-            var result = from t in taskRes.Result
+            }).Result;
+            var result = from t in taskRes
                          select new
                          {
                              tagId = t.Id.ToString(),
