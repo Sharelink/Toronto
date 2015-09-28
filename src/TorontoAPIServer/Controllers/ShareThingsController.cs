@@ -40,28 +40,6 @@ namespace TorontoAPIServer.Controllers
             {
                 return usrService.GetUserLinkedUsers(UserSessionData.UserId);
             }).Result;
-
-            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            foreach (var u in users)
-            {
-                var userId = u.Value.Id;
-                var focusTags = tagService.GetUserFocusTags(userId.ToString()).Result;
-                var newFocusTags = from f in focusTags where f.LastActiveTime < olderTime && f.LastActiveTime > newerTime orderby f.LastActiveTime descending select f;
-                
-                if(newFocusTags.Count() > 0)
-                {
-                    var tag = newFocusTags.ElementAt(0);
-                    things.Insert(0, new ShareThing()
-                    {
-                        Id = userId,
-                        LastActiveTime = tag.LastActiveTime,
-                        ShareTime = tag.LastActiveTime,
-                        ShareType = "message",
-                        UserId = userId,
-                        ShareContent = tag.TagName
-                    });
-                }
-            }
             
             var result = new object[things.Count];
             for (int i = 0; i < result.Length; i++)

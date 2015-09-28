@@ -20,9 +20,12 @@ namespace TorontoAPIServer.Controllers
         public object Get()
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
+            var shareService = this.UseShareService().GetSharelinkUserService();
+            
             var taskRes = Task.Run(() =>
             {
-                return sharelinkTagService.GetMyAllSharelinkTags(UserSessionData.UserId);
+                var tag = sharelinkTagService.GetMyAllSharelinkTags(UserSessionData.UserId);
+                return tag;
             }).Result;
             var result = from t in taskRes
                          select new
@@ -42,10 +45,24 @@ namespace TorontoAPIServer.Controllers
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var shareService = this.UseShareService().GetShareService();
+            var userId = new ObjectId(UserSessionData.UserId);
             var taskResult = Task.Run(async () =>
             {
                
                 var r = await sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId, tagName, tagColor, data, isFocus);
+                if (bool.Parse(isFocus))
+                {
+                    var newShare = new ShareThing()
+                    {
+                        Id = userId,
+                        LastActiveTime = DateTime.Now,
+                        ShareTime = DateTime.Now,
+                        ShareType = "message",
+                        UserId = userId,
+                        ShareContent = r.TagName
+                    };
+                    await shareService.PostNewShareThing(newShare);
+                }
                 return r;
             }).Result;
             var res = new

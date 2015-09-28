@@ -23,7 +23,7 @@ namespace TorontoService
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             await shareThingCollection.InsertOneAsync(newShareThing);
-            MarkARecordForShareThing(newShareThing.Id, newShareThing.UserId);
+            MarkARecordForShareThing(newShareThing.Id, newShareThing.UserId,"new share");
             return newShareThing;
         }
 

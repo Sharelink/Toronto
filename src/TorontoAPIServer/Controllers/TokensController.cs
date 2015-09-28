@@ -34,7 +34,8 @@ namespace TorontoAPIServer.Controllers
                         AppToken = tokenResult.UserSessionData.AppToken,
                         UserId = userId,
                         APIServer = Startup.APIUrl,
-                        FileAPIServer = Startup.FileApiUrl
+                        FileAPIServer = Startup.FileApiUrl,
+                        MessageServer = ""
                     };
                 }
                 else
