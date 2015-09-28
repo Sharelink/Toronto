@@ -55,6 +55,26 @@ namespace TorontoModel.MongodbModel
         public string Operate { get; set; }
     }
 
+    public enum MessageType
+    {
+        Text = 1,
+        Picture = 2,
+        Sound = 3,
+        Film = 4,
+        Html = 5,
+        Other = 6
+    }
+
+    public class SharelinkMessage
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId SenderId { get; set; }
+        public ObjectId ShareId { get; set; }
+        public ObjectId ToSharelinkerId { get; set; }
+        public string MessageContent { get; set; }
+        public DateTime Time { get; set; }
+    }
+
     public interface ISharelinkTag
     {
         ObjectId Id { get; set; }
