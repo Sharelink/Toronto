@@ -45,6 +45,15 @@ namespace TorontoAPIServer.Controllers
             {
                 return await messageService.sendMessageTo(shareId, UserSessionData.UserId, toUserId, message);
             }).Result;
+
+            var client = Startup.ServicesProvider.GetChicagoClient();
+            var msg = new
+            {
+                UserId = toUserId,
+                ShareId = shareId,
+                Msg = message
+            };
+            client.SendJsonMessageAsync("NotificationCenter", "UsrNewMsg", msg);
             return new
             {
                 msgId = newmsg.Id.ToString(),

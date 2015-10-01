@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
-using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Routing;
 using Microsoft.Framework.DependencyInjection;
 using TorontoAPIServer.Authentication;
 using Microsoft.Framework.Configuration;
@@ -17,6 +12,8 @@ using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
 using ChicagoClientLib;
+using System.Net;
+using CSharpClientFramework.Client;
 
 namespace TorontoAPIServer
 {
@@ -33,6 +30,7 @@ namespace TorontoAPIServer
         public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
         public static string BahamutDBConnectionString { get; private set; }
         public static IRedisServerConfig ControlRedisServerConfig { get; private set; }
+        public static BahamutAppInstance BahamutAppInstance { get; private set; }
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
             // Setup configuration sources.
@@ -83,10 +81,19 @@ namespace TorontoAPIServer
                 Appkey = Appkey,
                 InstanceServiceUrl = Configuration["server.urls"]
             };
-            appInstance = serverMgrService.RegistAppInstance(appInstance);
-            serverMgrService.StartKeepAlive(appInstance.Id);
+            try
+            {
+                BahamutAppInstance = serverMgrService.RegistAppInstance(appInstance);
+                serverMgrService.StartKeepAlive(BahamutAppInstance.Id);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Can't connect to app center to regist");
+            }
 
             var chicagoClient = ServicesProvider.GetChicagoClient();
+            chicagoClient.Start(IPAddress.Parse(Configuration["Data:ChicagoServer:address"]), int.Parse(Configuration["Data:ChicagoServer:port"]));
+            chicagoClient.OnConnected += ChicagoClient_OnConnected;
 
             app.UseMiddleware<BasicAuthentication>(Appkey);
             // Configure the HTTP request pipeline.
@@ -98,6 +105,34 @@ namespace TorontoAPIServer
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
         }
 
+        private void ChicagoClient_OnConnected(object sender, CSharpServerClientEventArgs e)
+        {
+            var chicagoClient = sender as ChicagoClient;
+            chicagoClient.AddValidateReturnHandler(onValidateReturn);
+
+            Console.WriteLine("Connect to Chicago......");
+            if (BahamutAppInstance != null)
+            {
+                chicagoClient.Validate(Appkey, BahamutAppInstance.Id);
+            }
+            else
+            {
+                chicagoClient.Validate(Appname + Appkey, Appkey);
+            }
+        }
+
+        private void onValidateReturn(object sender, CSharpServerClientEventArgs e)
+        {
+            var result = e.State as JsonMessage;
+            if ((bool)result.Result.IsValidate)
+            {
+                Console.WriteLine("Connect to Chicago Success");
+            }
+            else
+            {
+                Console.WriteLine("Connect to Chicago Failed");
+            }
+        }
     }
 
     public static class IGetBahamutServiceExtension

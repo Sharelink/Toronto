@@ -1,5 +1,5 @@
 {
-  "projects": [ "src", "test", "../BahamutZero/src", "../ServerControl/src", "../Chicago/src" ],
+  "projects": [ "src", "test", "../BahamutZero/src", "../ServerControl/src", "../Chicago/src", "../../CSharpServerFramework" ],
     "sdk": {
       "version": "1.0.0-beta7"
     }
