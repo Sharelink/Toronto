@@ -16,6 +16,7 @@ using Microsoft.Dnx.Runtime;
 using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
+using ChicagoClientLib;
 
 namespace TorontoAPIServer
 {
@@ -51,6 +52,7 @@ namespace TorontoAPIServer
                 Url = Configuration["Data:SharelinkDBServer:Url"]
             };
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
+            
         }
 
         // This method gets called by a runtime.
@@ -64,6 +66,7 @@ namespace TorontoAPIServer
             services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
             services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
+            services.AddInstance(new ChicagoClient());
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
             // services.AddWebApiConventions();
@@ -83,6 +86,8 @@ namespace TorontoAPIServer
             appInstance = serverMgrService.RegistAppInstance(appInstance);
             serverMgrService.StartKeepAlive(appInstance.Id);
 
+            var chicagoClient = ServicesProvider.GetChicagoClient();
+
             app.UseMiddleware<BasicAuthentication>(Appkey);
             // Configure the HTTP request pipeline.
             app.UseStaticFiles();
@@ -92,10 +97,16 @@ namespace TorontoAPIServer
             // Add the following route for porting Web API 2 controllers.
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
         }
+
     }
 
     public static class IGetBahamutServiceExtension
     {
+        public static ChicagoClient GetChicagoClient(this IServiceProvider provider)
+        {
+            return provider.GetService<ChicagoClient>();
+        }
+
         public static BahamutAccountService GetAccountService(this IServiceProvider provider)
         {
             return provider.GetService<BahamutAccountService>();
