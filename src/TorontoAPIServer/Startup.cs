@@ -31,6 +31,9 @@ namespace TorontoAPIServer
         public static string BahamutDBConnectionString { get; private set; }
         public static IRedisServerConfig ControlRedisServerConfig { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
+        public static string ChicagoServerAddress { get; private set; }
+        public static int ChicagoServerPort { get; private set; }
+
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
             // Setup configuration sources.
@@ -50,7 +53,8 @@ namespace TorontoAPIServer
                 Url = Configuration["Data:SharelinkDBServer:Url"]
             };
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
-            
+            ChicagoServerAddress = Configuration["Data:ChicagoServer:address"];
+            ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
         }
 
         // This method gets called by a runtime.
@@ -92,7 +96,7 @@ namespace TorontoAPIServer
             }
 
             var chicagoClient = ServicesProvider.GetChicagoClient();
-            chicagoClient.Start(IPAddress.Parse(Configuration["Data:ChicagoServer:address"]), int.Parse(Configuration["Data:ChicagoServer:port"]));
+            chicagoClient.Start(IPAddress.Parse(ChicagoServerAddress), ChicagoServerPort);
             chicagoClient.OnConnected += ChicagoClient_OnConnected;
 
             app.UseMiddleware<BasicAuthentication>(Appkey);

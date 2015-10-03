@@ -35,7 +35,7 @@ namespace TorontoAPIServer.Controllers
                         UserId = userId,
                         APIServer = Startup.APIUrl,
                         FileAPIServer = Startup.FileApiUrl,
-                        MessageServer = ""
+                        MessageServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
                     };
                 }
                 else
