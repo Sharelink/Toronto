@@ -46,8 +46,8 @@ namespace TorontoAPIServer
             FileApiUrl = "http://192.168.1.67:8089";
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
-            APIUrl = Configuration["server.urls"] + "/api";
             Server = Configuration["server.urls"];
+            APIUrl = Server + "/api";
             SharelinkDBConfig = new MongoDbServerConfig()
             {
                 Url = Configuration["Data:SharelinkDBServer:Url"]
@@ -96,7 +96,7 @@ namespace TorontoAPIServer
             }
 
             var chicagoClient = ServicesProvider.GetChicagoClient();
-            chicagoClient.Start(IPAddress.Parse(ChicagoServerAddress), ChicagoServerPort);
+            //chicagoClient.Start(IPAddress.Parse(ChicagoServerAddress), ChicagoServerPort);
             chicagoClient.OnConnected += ChicagoClient_OnConnected;
 
             app.UseMiddleware<BasicAuthentication>(Appkey);
