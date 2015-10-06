@@ -188,6 +188,21 @@ namespace TorontoService
             return result.SignText == newSign;
         }
 
+        public async Task<bool> UpdateUserHeadIcon(string userId, string newIconId)
+        {
+            var userOId = new ObjectId(userId);
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var result = await collection.FindOneAndUpdateAsync(usr => usr.Id == userOId, new UpdateDefinitionBuilder<SharelinkUser>().Set(u => u.HeadIcon, newIconId));
+            return result.HeadIcon == newIconId;
+        }
+
+        public async Task<bool> UpdateUserProfileVideo(string userId, string newPersionVideoId)
+        {
+            var userOId = new ObjectId(userId);
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var result = await collection.FindOneAndUpdateAsync(usr => usr.Id == userOId, new UpdateDefinitionBuilder<SharelinkUser>().Set(u => u.PersonalVideo, newPersionVideoId));
+            return result.PersonalVideo == newPersionVideoId;
+        }
 
         public async Task<SharelinkUser> GetMyLinkedUser(string myUserId, string userId)
         {

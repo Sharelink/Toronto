@@ -72,5 +72,31 @@ namespace TorontoAPIServer.Controllers
             return taskResult.Result;
 
         }
+
+        //PUT /ShareLinkUsers/HeadIcon : update my user signtext profile property
+        [HttpPut("HeadIcon")]
+        public bool PutHeadIcon(string newHeadIconId)
+        {
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var taskResult = Task.Run(() =>
+            {
+                return userService.UpdateUserHeadIcon(UserSessionData.UserId, newHeadIconId);
+            });
+            return taskResult.Result;
+
+        }
+
+        //PUT /ShareLinkUsers/ProfileVideo : update my user signtext profile property
+        [HttpPut("ProfileVideo")]
+        public bool PutProfileVideo(string newProfileVideoId)
+        {
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var taskResult = Task.Run(() =>
+            {
+                return userService.UpdateUserProfileVideo(UserSessionData.UserId, newProfileVideoId);
+            });
+            return taskResult.Result;
+
+        }
     }
 }
