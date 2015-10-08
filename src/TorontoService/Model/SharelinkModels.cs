@@ -75,19 +75,7 @@ namespace TorontoModel.MongodbModel
         public DateTime Time { get; set; }
     }
 
-    public interface ISharelinkTag
-    {
-        ObjectId Id { get; set; }
-        ObjectId UserId { set; get; }
-        string TagName { get; set; }
-        string TagColor { get; set; }
-        string Data { get; set; }
-        bool IsFocus { get; set; }
-        bool ShowToLinkers { get; set; }
-        DateTime LastActiveTime { get; set; }
-    }
-
-    public class FocusSharelinkerTag : ISharelinkTag
+    public class SharelinkTag
     {
         public ObjectId Id { get; set; }
         public ObjectId UserId { set; get; }
@@ -95,27 +83,7 @@ namespace TorontoModel.MongodbModel
         public string TagColor { get; set; }
         public string Data { get; set; }
         public bool IsFocus { get; set; }
-        public bool ShowToLinkers
-        {
-            get { return false; }
-            set { }
-        }
-        public DateTime LastActiveTime { get; set; }
-    }
-
-    public class SharelinkTag : ISharelinkTag
-    {
-        public ObjectId Id { get; set; }
-        public ObjectId UserId { set; get; }
-        public string TagName { get; set; }
-        public string TagColor { get; set; }
-        public string Data { get; set; }
-        public bool IsFocus { get; set; }
-        public bool ShowToLinkers
-        {
-            get { return IsFocus; }
-            set { }
-        }
+        public bool ShowToLinkers { get; set; }
         public DateTime LastActiveTime { get; set; }
     }
 

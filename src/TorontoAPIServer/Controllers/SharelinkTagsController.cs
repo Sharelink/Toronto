@@ -20,7 +20,7 @@ namespace TorontoAPIServer.Controllers
         public object Get()
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var shareService = this.UseShareService().GetSharelinkUserService();
+            var shareService = this.UseSharelinkUserService().GetSharelinkUserService();
             
             var taskRes = Task.Run(() =>
             {

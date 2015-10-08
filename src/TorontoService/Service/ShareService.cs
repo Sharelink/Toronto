@@ -120,12 +120,9 @@ namespace TorontoService
         {
             var sId = new ObjectId(shareId);
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
-            var newVote = new Vote()
-            {
-                UserId = new ObjectId(userId),
-                VoteTime = DateTime.Now
-            };
-            var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().Pull(ts => ts.Votes, newVote));
+            var UserId = new ObjectId(userId);
+            var op = new UpdateDefinitionBuilder<ShareThing>().PullFilter(t => t.Votes, t => t.UserId == UserId);
+            var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, op);
             return result.ModifiedCount > 0;
         }
     }
