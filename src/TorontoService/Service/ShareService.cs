@@ -68,8 +68,10 @@ namespace TorontoService
                 records = await activeRecordCollection.Find(inFilter & timeOldFilter).ToListAsync();
             }
             var shareIds = from r in records select r.ShareId;
-            var sInFilter =new FilterDefinitionBuilder<ShareThing>().In(s => s.Id,shareIds) & (new FilterDefinitionBuilder<ShareThing>().Eq( s => s.UserId, uOId ) |new FilterDefinitionBuilder<ShareThing>().AnyIn(t => t.Tags, myTags)
-                | new FilterDefinitionBuilder<ShareThing>().AnyEq(t => t.Tags, "all"));
+            var sInFilter =new FilterDefinitionBuilder<ShareThing>().In(s => s.Id,shareIds) & (
+                new FilterDefinitionBuilder<ShareThing>().Eq( s => s.UserId, uOId ) |
+                new FilterDefinitionBuilder<ShareThing>().AnyIn(t => t.Tags, myTags)|
+                new FilterDefinitionBuilder<ShareThing>().AnyEq(t => t.Tags, "all"));
             var result = await shareThingCollection.Find(sInFilter).ToListAsync();
             for (int i = 0; i < result.Count; i++)
             {

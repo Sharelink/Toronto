@@ -1,6 +1,7 @@
 ﻿using BahamutCommon;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using ServiceStack.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,57 +22,66 @@ namespace TorontoService
             }
         }
 
+        public IMongoCollection<ShareChat> ChatCollection
+        {
+            get
+            {
+                return Client.GetDatabase("SharelinkMessage").GetCollection<ShareChat>("ShareChat");
+            }
+        }
+
         public MessageService(IMongoClient client)
         {
             Client = client;
         }
 
-        public async Task<IList<SharelinkMessage>> GetMessage(string userId,string shareId,string senderId = null,string olderThanId = null, int count = 20)
+        public async Task<ShareChat> GetOrCreateChat(string chatId, string userId, string shareId,  string audienceId)
+        {
+            
+            try
+            {
+                var chat = await ChatCollection.Find(m => m.ChatId == chatId).SingleAsync();
+                return chat;
+            }
+            catch (Exception)
+            {
+                var newChat = new ShareChat()
+                {
+                    ChatId = chatId,
+                    ShareId = new ObjectId(shareId),
+                    Time = DateTime.Now,
+                    UserIds = new ObjectId[] { new ObjectId(userId), new ObjectId(audienceId) }
+                };
+                await ChatCollection.InsertOneAsync(newChat);
+                return newChat;
+            }
+            
+        }
+
+
+        public async Task<IList<SharelinkMessage>> GetMessage(string userId,string chatId,string newerThanTime,bool includeOwnMessage = false)
         {
             var collection = MessageCollection;
-            DateTime date;
-            if (olderThanId == null)
+            DateTime date = DateTime.Parse(newerThanTime);
+            if (includeOwnMessage)
             {
-                var oId = new ObjectId(olderThanId);
-                var olderMessage = await collection.Find(m => m.Id == oId).SingleAsync();
-                date = olderMessage.Time;
-            }
-            else
-            {
-                date = DateTime.Now;
-            }
-            var userOId = new ObjectId(userId);
-            var shareOId = new ObjectId(shareId);
-            if (string.IsNullOrWhiteSpace(senderId))
-            {
-                var senderOId = new ObjectId(senderId);
-                var result = collection.Find(m => m.ShareId == shareOId && m.SenderId == senderOId && m.ToSharelinkerId == userOId && m.Time < date).SortBy(m => m.Time).Limit(count);
+                var result = collection.Find(m => m.ChatId == chatId && m.Time > date).SortBy(m => m.Time);
                 return await result.ToListAsync();
             }
             else
             {
-                var result = collection.Find(m => m.ShareId == shareOId && m.ToSharelinkerId == userOId && m.Time < date).SortBy(m => m.Time).Limit(count);
+                var userOId = new ObjectId(userId);
+                var result = collection.Find(m => m.ChatId == chatId && m.Time > date && m.SenderId != userOId).SortBy(m => m.Time);
                 return await result.ToListAsync();
             }
             
         }
 
-        public async Task<SharelinkMessage> sendMessageTo(string shareId, string userId, string toSharelinker, string message)
+        public async Task<SharelinkMessage> NewMessage(SharelinkMessage msg)
         {
-            var shareOId = new ObjectId(shareId);
-            var userOId = new ObjectId(userId);
-            var toLinkerOId = new ObjectId(toSharelinker);
             var collection = MessageCollection;
-            var newMessage = new SharelinkMessage()
-            {
-                MessageContent = message,
-                SenderId = userOId,
-                ShareId = shareOId,
-                Time = DateTime.Now,
-                ToSharelinkerId = toLinkerOId
-            };
-            await collection.InsertOneAsync(newMessage);
-            return newMessage;
+            await collection.InsertOneAsync(msg);
+            return msg;
         }
 
 

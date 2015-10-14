@@ -18,6 +18,14 @@
       "url": "redis://192.168.1.23:6379"
     },
 
+    "MessagePubSubServer": {
+      "url": "redis://192.168.1.23:6379"
+    },
+
+    "MessageCacheServer": {
+      "url": "redis://192.168.1.23:6379"
+    },
+
     "ChicagoServer": {
       "address": "192.168.1.67",
       "port": 6789

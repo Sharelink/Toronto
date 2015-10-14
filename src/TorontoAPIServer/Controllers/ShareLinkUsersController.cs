@@ -26,7 +26,7 @@ namespace TorontoAPIServer.Controllers
                 userId = u.Id.ToString(),
                 nickName = u.NickName,
                 noteName = u.NoteName,
-                headIconId = u.HeadIcon,
+                avatarId = u.Avatar,
                 personalVideoId = u.PersonalVideo,
                 createTime = DateTimeUtil.ToString(u.CreateTime),
                 signText = u.SignText
@@ -73,14 +73,14 @@ namespace TorontoAPIServer.Controllers
 
         }
 
-        //PUT /ShareLinkUsers/HeadIcon : update my user signtext profile property
-        [HttpPut("HeadIcon")]
-        public bool PutHeadIcon(string newHeadIconId)
+        //PUT /ShareLinkUsers/Avatar : update my user signtext profile property
+        [HttpPut("Avatar")]
+        public bool PutAvatar(string newAvatarId)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             var taskResult = Task.Run(() =>
             {
-                return userService.UpdateUserHeadIcon(UserSessionData.UserId, newHeadIconId);
+                return userService.UpdateUserAvatar(UserSessionData.UserId, newAvatarId);
             });
             return taskResult.Result;
 

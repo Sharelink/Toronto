@@ -34,7 +34,7 @@ namespace TorontoAPIServer.Controllers
                 var taskResult = Task.Run(async () =>
                 {
                     var user = await userService.CreateNewUser(newUser);
-                    userService.AskForLink(user.Id.ToString(), user.Id.ToString());
+                    await userService.AskForLink(user.Id.ToString(), user.Id.ToString());
                     return user;
                 });
                 newUser = taskResult.Result;
@@ -45,7 +45,8 @@ namespace TorontoAPIServer.Controllers
                     AppToken = sessionData.UserSessionData.AppToken,
                     UserId = sessionData.UserSessionData.UserId,
                     APIServer = Startup.APIUrl,
-                    FileAPIServer = Startup.FileApiUrl
+                    FileAPIServer = Startup.FileApiUrl,
+                    ChicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
                 };
             }
             else

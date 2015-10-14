@@ -105,7 +105,7 @@ namespace TorontoService
             return await linkedUsers.ToListAsync();
         }
 
-        public SharelinkUserLink AskForLink(string masterUserId, string otherUserId)
+        public async Task<SharelinkUserLink> AskForLink(string masterUserId, string otherUserId)
         {
             var state = new SharelinkUserLink.State();
             if (masterUserId == otherUserId)
@@ -115,15 +115,15 @@ namespace TorontoService
             else
             {
                 state.LinkState = (int)SharelinkUserLink.LinkState.Asking;
-                CreateNewLinkWithOtherUser(otherUserId, masterUserId, new SharelinkUserLink.State()
+                await CreateNewLinkWithOtherUser(otherUserId, masterUserId, new SharelinkUserLink.State()
                 {
                     LinkState = (int)SharelinkUserLink.LinkState.WaitToAccept
                 });
             }
-            return CreateNewLinkWithOtherUser(masterUserId, otherUserId, state);
+            return await CreateNewLinkWithOtherUser(masterUserId, otherUserId, state);
         }
 
-        public SharelinkUserLink CreateNewLinkWithOtherUser(string masterUserId,string otherUserId,SharelinkUserLink.State state)
+        public async Task<SharelinkUserLink> CreateNewLinkWithOtherUser(string masterUserId, string otherUserId, SharelinkUserLink.State state)
         {
             var mUOId = new ObjectId(masterUserId);
             var otherUser = Task.Run(() => { return GetUserOfUserId(otherUserId); }).Result;
@@ -137,14 +137,10 @@ namespace TorontoService
                 SlaveUserNoteName = otherUser.NickName
             };
 
-            Task.Run(async () =>
-            {
-                await linkCollection.InsertOneAsync(newLink);
-            });
-            
+            await linkCollection.InsertOneAsync(newLink);
             var update = new UpdateDefinitionBuilder<SharelinkUser>().Push(slu => slu.LinkedUsers, newLink.Id);
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            collection.UpdateOneAsync(slu => slu.Id == mUOId, update);
+            await collection.UpdateOneAsync(slu => slu.Id == mUOId, update);
             return newLink;
         }
 
@@ -188,12 +184,12 @@ namespace TorontoService
             return result.SignText == newSign;
         }
 
-        public async Task<bool> UpdateUserHeadIcon(string userId, string newIconId)
+        public async Task<bool> UpdateUserAvatar(string userId, string newAvatarId)
         {
             var userOId = new ObjectId(userId);
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            var result = await collection.FindOneAndUpdateAsync(usr => usr.Id == userOId, new UpdateDefinitionBuilder<SharelinkUser>().Set(u => u.HeadIcon, newIconId));
-            return result.HeadIcon == newIconId;
+            var result = await collection.FindOneAndUpdateAsync(usr => usr.Id == userOId, new UpdateDefinitionBuilder<SharelinkUser>().Set(u => u.Avatar, newAvatarId));
+            return result.Avatar == newAvatarId;
         }
 
         public async Task<bool> UpdateUserProfileVideo(string userId, string newPersionVideoId)

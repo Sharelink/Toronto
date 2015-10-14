@@ -26,13 +26,14 @@ namespace TorontoAPIServer
         public static string Server { get; set; }
         public static string APIUrl { get; private set; }
         public static string FileApiUrl { get; private set; }
-        public static IRedisServerConfig TokenServerConfig { get; private set; }
         public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
         public static string BahamutDBConnectionString { get; private set; }
         public static IRedisServerConfig ControlRedisServerConfig { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
         public static string ChicagoServerAddress { get; private set; }
         public static int ChicagoServerPort { get; private set; }
+        public static RedisManagerPool MessagePubSubServerClientManager { get; private set; }
+        public static RedisManagerPool MessageCacheServerClientManager { get; private set; }
 
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
@@ -69,6 +70,8 @@ namespace TorontoAPIServer
             services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
             services.AddInstance(new ChicagoClient());
+            MessagePubSubServerClientManager = new RedisManagerPool(Configuration["Data:MessagePubSubServer:url"]);
+            MessageCacheServerClientManager = new RedisManagerPool(Configuration["Data:MessageCacheServer:url"]);
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
             // services.AddWebApiConventions();

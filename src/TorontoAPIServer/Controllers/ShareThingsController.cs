@@ -53,7 +53,7 @@ namespace TorontoAPIServer.Controllers
                     pShareId = thing.PShareId.ToString(),
                     userId = uId,
                     userNick = user.NoteName,
-                    headIconImageId = user.HeadIcon,
+                    avatarId = user.Avatar,
                     shareTime = DateTimeUtil.ToString(thing.ShareTime),
                     shareType = thing.ShareType.ToString(),
                     title = thing.Title,

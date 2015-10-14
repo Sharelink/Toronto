@@ -24,8 +24,8 @@ namespace TorontoAPIServer.Controllers
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
             var taskRes = Task.Run(() => {
                 return service.GetUserlinksOfUserId(UserSessionData.UserId);
-            });
-            var results =  from ul in taskRes.Result
+            }).Result;
+            var results =  from ul in taskRes
                    select new
                    {
                        linkId = ul.SlaveUserObjectId.ToString(),
@@ -69,10 +69,14 @@ namespace TorontoAPIServer.Controllers
 
         //POST /UserLinks (myUserId,otherUserId) : add new link with other user
         [HttpPost]
-        public void Post(string otherUserId)
+        public bool Post(string otherUserId)
         {
             var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            service.AskForLink(UserSessionData.UserId, otherUserId);
+            var res = Task.Run(async () =>
+            {
+                return await service.AskForLink(UserSessionData.UserId, otherUserId);
+            }).Result;
+            return res != null;
         }
     }
 }

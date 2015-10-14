@@ -18,7 +18,7 @@ namespace TorontoModel.MongodbModel
         public string NickName { get; set; }
         public string NoteName { get; set; }
         public DateTime CreateTime { get; set; }
-        public string HeadIcon { get; set; }
+        public string Avatar { get; set; }
         public string PersonalVideo { get; set; }
         public string SignText { get; set; }
         public ObjectId[] LinkedUsers { get; set; }
@@ -65,13 +65,30 @@ namespace TorontoModel.MongodbModel
         Other = 6
     }
 
+    public class SharelinkerLastGetMessageInfo
+    {
+        public ObjectId UserId { get; set; }
+        public DateTime LastTime { get; set; }
+        public DateTime NewMessageTime { get; set; }
+    }
+
+    public class ShareChat
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId ShareId { get; set; }
+        public string ChatId { get; set; }
+        public ObjectId[] UserIds { get; set; }
+        public DateTime Time { get; set; }
+    }
+
     public class SharelinkMessage
     {
         public ObjectId Id { get; set; }
         public ObjectId SenderId { get; set; }
-        public ObjectId ShareId { get; set; }
-        public ObjectId ToSharelinkerId { get; set; }
-        public string MessageContent { get; set; }
+        public string ChatId { get; set; }
+        public string Message { get; set; }
+        public string MessageData { get; set; }
+        public string MessageType { get; set; }
         public DateTime Time { get; set; }
     }
 
