@@ -10,28 +10,6 @@ using BahamutService;
 
 namespace TorontoAPIServer.Authentication
 {
-    //[System.AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
-    //public sealed class NoBasicAuthenticationAttribute : Attribute
-    //{
-    //    // See the attribute guidelines at 
-    //    //  http://go.microsoft.com/fwlink/?LinkId=85236
-    //    readonly string positionalString;
-
-    //    // This is a positional argument
-    //    public NoBasicAuthenticationAttribute(string positionalString)
-    //    {
-    //        this.positionalString = positionalString;
-    //        BasicAuthentication.ArrowRoute.Add(positionalString, true);
-    //    }
-
-    //    public string PositionalString
-    //    {
-    //        get { return positionalString; }
-    //    }
-
-    //    // This is a named argument
-    //    public int NamedInt { get; set; }
-    //}
 
     // You may need to install the Microsoft.AspNet.Http.Abstractions package into your project
     public class BasicAuthentication
@@ -49,7 +27,7 @@ namespace TorontoAPIServer.Authentication
             tokenService = Startup.ServicesProvider.GetTokenService();
         }
 
-        public async Task<Task> Invoke(HttpContext httpContext)
+        public Task Invoke(HttpContext httpContext)
         {
             Console.WriteLine(httpContext.Request.Path);
             if (httpContext.Request.Path == "/Tokens" || httpContext.Request.Path == "/NewSharelinkUsers")
@@ -58,7 +36,7 @@ namespace TorontoAPIServer.Authentication
             }
             var userId = httpContext.Request.Headers["userId"];
             var token = httpContext.Request.Headers["token"];
-            var res = await tokenService.ValidateAppToken(Appkey, userId, token);
+            var res = tokenService.ValidateAppToken(Appkey, userId, token).Result;
             
             if(res != null)
             {

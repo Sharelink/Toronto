@@ -11,9 +11,8 @@ using Microsoft.Dnx.Runtime;
 using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
-using ChicagoClientLib;
 using System.Net;
-using CSharpClientFramework.Client;
+using BahamutFireService.Service;
 
 namespace TorontoAPIServer
 {
@@ -69,7 +68,7 @@ namespace TorontoAPIServer
             services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
             services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
-            services.AddInstance(new ChicagoClient());
+            services.AddInstance(new FireAccesskeyService());
             MessagePubSubServerClientManager = new RedisManagerPool(Configuration["Data:MessagePubSubServer:url"]);
             MessageCacheServerClientManager = new RedisManagerPool(Configuration["Data:MessageCacheServer:url"]);
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
@@ -98,10 +97,6 @@ namespace TorontoAPIServer
                 Console.WriteLine("Can't connect to app center to regist");
             }
 
-            var chicagoClient = ServicesProvider.GetChicagoClient();
-            //chicagoClient.Start(IPAddress.Parse(ChicagoServerAddress), ChicagoServerPort);
-            chicagoClient.OnConnected += ChicagoClient_OnConnected;
-
             app.UseMiddleware<BasicAuthentication>(Appkey);
             // Configure the HTTP request pipeline.
             app.UseStaticFiles();
@@ -111,42 +106,13 @@ namespace TorontoAPIServer
             // Add the following route for porting Web API 2 controllers.
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
         }
-
-        private void ChicagoClient_OnConnected(object sender, CSharpServerClientEventArgs e)
-        {
-            var chicagoClient = sender as ChicagoClient;
-            chicagoClient.AddValidateReturnHandler(onValidateReturn);
-
-            Console.WriteLine("Connect to Chicago......");
-            if (BahamutAppInstance != null)
-            {
-                chicagoClient.Validate(Appkey, BahamutAppInstance.Id);
-            }
-            else
-            {
-                chicagoClient.Validate(Appname + Appkey, Appkey);
-            }
-        }
-
-        private void onValidateReturn(object sender, CSharpServerClientEventArgs e)
-        {
-            var result = e.State as JsonMessage;
-            if ((bool)result.Result.IsValidate)
-            {
-                Console.WriteLine("Connect to Chicago Success");
-            }
-            else
-            {
-                Console.WriteLine("Connect to Chicago Failed");
-            }
-        }
     }
 
     public static class IGetBahamutServiceExtension
     {
-        public static ChicagoClient GetChicagoClient(this IServiceProvider provider)
+        public static FireAccesskeyService GetFireAccesskeyService(this IServiceProvider provider)
         {
-            return provider.GetService<ChicagoClient>();
+            return provider.GetService<FireAccesskeyService>();
         }
 
         public static BahamutAccountService GetAccountService(this IServiceProvider provider)

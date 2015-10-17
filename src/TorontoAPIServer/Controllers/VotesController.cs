@@ -17,15 +17,12 @@ namespace TorontoAPIServer.Controllers
 
         //POST /Votes/{shareId} : vote sharething of shareId
         [HttpPost("{shareId}")]
-        public void Post(string shareId)
+        public async void Post(string shareId)
         {
-            var isSuc = Task.Run(async () =>
-            {
-                var shareService = this.UseShareService().GetShareService();
-                shareService.MarkARecordForShareThing(new MongoDB.Bson.ObjectId(shareId), new MongoDB.Bson.ObjectId(UserSessionData.UserId), "vote");
-                return await shareService.VoteShare(UserSessionData.UserId, shareId);
-            }).Result;
-            if(!isSuc)
+            var shareService = this.UseShareService().GetShareService();
+            shareService.MarkARecordForShareThing(new MongoDB.Bson.ObjectId(shareId), new MongoDB.Bson.ObjectId(UserSessionData.UserId), "vote");
+            var isSuc = await shareService.VoteShare(UserSessionData.UserId, shareId);
+            if (!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
@@ -33,13 +30,10 @@ namespace TorontoAPIServer.Controllers
 
         //DELETE /Votes/{shareId} : vote sharething of shareId
         [HttpDelete("{shareId}")]
-        public void Delete(string shareId)
+        public async void Delete(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            var isSuc = Task.Run(async () =>
-            {
-                return await shareService.UnvoteShare(UserSessionData.UserId, shareId);
-            }).Result;
+            var isSuc = await shareService.UnvoteShare(UserSessionData.UserId, shareId);
             if (!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;

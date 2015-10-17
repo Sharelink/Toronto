@@ -17,11 +17,34 @@ namespace TorontoAPIServer.Controllers
 
         //GET /ShareLinkUsers : if not set the property userIds,return all my connnected users,the 1st is myself; set the userIds will return the user info of userIds
         [HttpGet]
-        public object Get()
+        public async Task<object[]> Get(string userIds)
+        {
+            
+            string[] ids = userIds != null ? userIds.Split('#') : null;
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var fireAccessKeyService = Startup.ServicesProvider.GetFireAccesskeyService();
+            var users = await userService.GetLinkedUsersOfUserId(UserSessionData.UserId, ids);
+            var result = from u in users
+                         select new
+                         {
+                             userId = u.Id.ToString(),
+                             nickName = u.NickName,
+                             noteName = u.NoteName,
+                             avatarId = fireAccessKeyService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, u.Avatar),
+                             personalVideoId = fireAccessKeyService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, u.PersonalVideo),
+                             createTime = DateTimeUtil.ToString(u.CreateTime),
+                             motto = u.Motto
+                         };
+            return result.ToArray();
+        }
+
+        //GET /ShareLinkUsers/{id} : return the user of id
+        [HttpGet("{userId}")]
+        public async Task<object> GetLinkedUser(string userId)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskRes = Task.Run(() => { return userService.GetLinkedUsersOfUserId(UserSessionData.UserId); }).Result;
-            var result = from u in taskRes select new
+            var u = await userService.GetMyLinkedUser(UserSessionData.UserId, userId);
+            return new
             {
                 userId = u.Id.ToString(),
                 nickName = u.NickName,
@@ -29,73 +52,42 @@ namespace TorontoAPIServer.Controllers
                 avatarId = u.Avatar,
                 personalVideoId = u.PersonalVideo,
                 createTime = DateTimeUtil.ToString(u.CreateTime),
-                signText = u.SignText
+                motto = u.Motto
             };
-            var users = result.ToArray();
-            return users;
-        }
-
-        //GET /ShareLinkUsers/{id} : return the user of id
-        [HttpGet("{userId}")]
-        public SharelinkUser Get(string userId)
-        {
-            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskResult = Task.Run(() => 
-            {
-                return userService.GetMyLinkedUser(UserSessionData.UserId, userId);
-            });
-            return taskResult.Result;
         }
 
         //PUT /ShareLinkUsers/NickName : update my user nick profile property
         [HttpPut("NickName")]
-        public bool Put(string nickName)
+        public async Task<bool> Put(string nickName)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskResult = Task.Run(() =>
-            {
-                return userService.UpdateUserProfileNickName(UserSessionData.UserId,nickName);
-            });
-            return taskResult.Result;
-            
-        }
-
-        //PUT /ShareLinkUsers/SignText : update my user signtext profile property
-        [HttpPut("SignText")]
-        public bool PutSignText(string signText)
-        {
-            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskResult = Task.Run(() =>
-            {
-                return userService.UpdateUserProfileSignText(UserSessionData.UserId, signText);
-            });
-            return taskResult.Result;
+            return await userService.UpdateUserProfileNickName(UserSessionData.UserId, nickName);
 
         }
 
-        //PUT /ShareLinkUsers/Avatar : update my user signtext profile property
+        //PUT /ShareLinkUsers/motto : update my user motto profile property
+        [HttpPut("Motto")]
+        public async Task<bool> PutMotto(string motto)
+        {
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            return await userService.UpdateUserProfileMotto(UserSessionData.UserId, motto);
+        }
+
+        //PUT /ShareLinkUsers/Avatar : update my user motto profile property
         [HttpPut("Avatar")]
-        public bool PutAvatar(string newAvatarId)
+        public async Task<bool> PutAvatar(string newAvatarId)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskResult = Task.Run(() =>
-            {
-                return userService.UpdateUserAvatar(UserSessionData.UserId, newAvatarId);
-            });
-            return taskResult.Result;
+            return await userService.UpdateUserAvatar(UserSessionData.UserId, newAvatarId);
 
         }
 
-        //PUT /ShareLinkUsers/ProfileVideo : update my user signtext profile property
+        //PUT /ShareLinkUsers/ProfileVideo : update my user motto profile property
         [HttpPut("ProfileVideo")]
-        public bool PutProfileVideo(string newProfileVideoId)
+        public async Task<bool> PutProfileVideo(string newProfileVideoId)
         {
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var taskResult = Task.Run(() =>
-            {
-                return userService.UpdateUserProfileVideo(UserSessionData.UserId, newProfileVideoId);
-            });
-            return taskResult.Result;
+            return await userService.UpdateUserProfileVideo(UserSessionData.UserId, newProfileVideoId);
 
         }
     }

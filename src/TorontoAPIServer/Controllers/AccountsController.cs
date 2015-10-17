@@ -16,55 +16,64 @@ namespace TorontoAPIServer.Controllers
     {
         // GET /Accounts : return my account information
         [HttpGet]
-        public object Get()
+        public async Task<object> Get()
         {
-            var accountService = Startup.ServicesProvider.GetAccountService();
-            var account = accountService.GetAccount(UserSessionData.AccountId);
-            return new
+            return await Task.Run(() =>
             {
-                accountId = account.AccountID,
-                accountName = account.AccountName,
-                createTime = DateTimeUtil.ToString(account.CreateTime),
-                name = account.Name,
-                mobile = account.Mobile,
-                email = account.Email
-            };
+                var accountService = Startup.ServicesProvider.GetAccountService();
+                var account = accountService.GetAccount(UserSessionData.AccountId);
+                return new
+                {
+                    accountId = account.AccountID,
+                    accountName = account.AccountName,
+                    createTime = DateTimeUtil.ToString(account.CreateTime),
+                    name = account.Name,
+                    mobile = account.Mobile,
+                    email = account.Email
+                };
+            });
         }
 
         // PUT /Accounts/Name (name) : update my account name properties
         [HttpPut("Name")]
-        public void PutName(string name)
+        public async void PutName(string name)
         {
-            var accountService = Startup.ServicesProvider.GetAccountService();
-            if (name != null)
+            await Task.Run(() =>
             {
-                if(!accountService.ChangeName(UserSessionData.AccountId,name))
+                var accountService = Startup.ServicesProvider.GetAccountService();
+                if (name != null)
+                {
+                    if (!accountService.ChangeName(UserSessionData.AccountId, name))
+                    {
+                        Response.StatusCode = (int)HttpStatusCode.NotModified;
+                    }
+                }
+                else
                 {
                     Response.StatusCode = (int)HttpStatusCode.NotModified;
                 }
-            }
-            else
-            {
-                Response.StatusCode = (int)HttpStatusCode.NotModified;
-            }
+            });
         }
 
         // PUT /Accounts/Name (name) : update my account birth properties
         [HttpPut("BirthDate")]
-        public void PutBirthDate(string birthdate)
+        public async void PutBirthDate(string birthdate)
         {
-            var accountService = Startup.ServicesProvider.GetAccountService();
-            if (birthdate != null)
+            await Task.Run(() =>
             {
-                if (!accountService.ChangeAccountBirthday(UserSessionData.AccountId, DateTimeUtil.ToDate(birthdate)))
+                var accountService = Startup.ServicesProvider.GetAccountService();
+                if (birthdate != null)
+                {
+                    if (!accountService.ChangeAccountBirthday(UserSessionData.AccountId, DateTimeUtil.ToDate(birthdate)))
+                    {
+                        Response.StatusCode = (int)HttpStatusCode.NotModified;
+                    }
+                }
+                else
                 {
                     Response.StatusCode = (int)HttpStatusCode.NotModified;
                 }
-            }
-            else
-            {
-                Response.StatusCode = (int)HttpStatusCode.NotModified;
-            }
+            });
         }
 
     }

@@ -16,19 +16,20 @@ namespace TorontoAPIServer.Controllers
 
         //GET /UserTags/{linkedUserId} : return all usertag of my usertag collection
         [HttpGet("{linkedUserId}")]
-        public object Get(string linkedUserId)
+        public async Task<object> Get(string linkedUserId)
         {
             var service = this.UseSharelinkTagService().GetSharelinkTagService();
-            var taskResult = Task.Run(() => { return service.GetUserFocusTags(linkedUserId); });
-            var tags = from t in taskResult.Result where t.IsFocus
-                   select new
-                   {
-                       tagId = t.Id.ToString(),
-                       tagName = t.TagName,
-                       tagColor = t.TagColor,
-                       data = t.Data,
-                       isFocus = t.IsFocus
-                   };
+            var taskResult = await service.GetUserFocusTags(linkedUserId);
+            var tags = from t in taskResult
+                       where t.IsFocus
+                       select new
+                       {
+                           tagId = t.Id.ToString(),
+                           tagName = t.TagName,
+                           tagColor = t.TagColor,
+                           data = t.Data,
+                           isFocus = t.IsFocus
+                       };
             return new
             {
                 userId = linkedUserId,

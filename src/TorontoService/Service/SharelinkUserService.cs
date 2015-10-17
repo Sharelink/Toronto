@@ -25,18 +25,28 @@ namespace TorontoService
             return newUser;
         }
 
-        public async Task<IList<SharelinkUser>> GetLinkedUsersOfUserId(string userId, bool useNoteName = true)
+        public async Task<IList<SharelinkUser>> GetLinkedUsersOfUserId(string userId, IEnumerable<string> ids = null, bool useNoteName = true)
         {
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var links = await GetUserlinksOfUserId(userId);
-            var linkedUserIds = from u in links select u.SlaveUserObjectId;
-            var linkedUsers = await (await collection.FindAsync(usr => linkedUserIds.Contains(usr.Id))).ToListAsync();
+            var oids = ids == null ? null : from id in ids where !string.IsNullOrWhiteSpace(id) select new ObjectId(id);
+            IEnumerable<ObjectId> linkedUserIds = null;
+            if (oids == null || oids.Count() == 0)
+            {
+                linkedUserIds = from l in links select l.SlaveUserObjectId;
+            }
+            else
+            {
+                linkedUserIds = from l in links where oids.Contains(l.SlaveUserObjectId) select l.SlaveUserObjectId;
+            }
+            var filter = new FilterDefinitionBuilder<SharelinkUser>().In(s => s.Id, linkedUserIds.ToArray());
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var linkedUsers =await (await collection.FindAsync(filter)).ToListAsync();
             if (useNoteName)
             {
                 var linkMap = links.ToDictionary(lu => lu.SlaveUserObjectId.ToString());
-                for (int i = 0; i < linkedUsers.Count; i++)
+                foreach (var item in linkedUsers)
                 {
-                    linkedUsers[i].NoteName = linkMap[linkedUsers[i].Id.ToString()].SlaveUserNoteName;
+                    item.NoteName = linkMap[item.Id.ToString()].SlaveUserNoteName;
                 }
             }
             return linkedUsers;
@@ -44,25 +54,9 @@ namespace TorontoService
 
         public async Task<IDictionary<string, SharelinkUser>> GetUserLinkedUsers(string userId,IEnumerable<string> linkedUserIds = null,bool useNoteName = true)
         {
-            var users = await GetLinkedUsersOfUserId(userId, useNoteName);
-            
+            var users = await GetLinkedUsersOfUserId(userId,linkedUserIds, useNoteName);
             var userDict = users.ToDictionary(u => u.Id.ToString());
-
-            if (linkedUserIds == null)
-            {
-                return userDict;
-            }
-
-            var result = new Dictionary<string, SharelinkUser>();
-            foreach (var item in linkedUserIds)
-            {
-                var usr = userDict[item];
-                if(!result.ContainsKey(item))
-                {
-                    result.Add(item, usr);
-                }
-            }
-            return result;
+            return userDict;
         }
 
         public async Task<SharelinkUser> GetUserOfUserId(string userId)
@@ -98,35 +92,18 @@ namespace TorontoService
 
         public async Task<IList<SharelinkUserLink>> GetUserlinksOfUserId(string userId)
         {
-            var user = await GetUserOfUserId(userId);
+            var userOId = new ObjectId(userId);
             var linkCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
-            var linkedUsers = linkCollection.Find(usr => user.LinkedUsers.Contains(usr.Id));
+            
+            var linkedUsers = linkCollection.Find(l => l.MasterUserObjectId == userOId);
             //TODO:Cache this
             return await linkedUsers.ToListAsync();
         }
 
-        public async Task<SharelinkUserLink> AskForLink(string masterUserId, string otherUserId)
-        {
-            var state = new SharelinkUserLink.State();
-            if (masterUserId == otherUserId)
-            {
-                state.LinkState = (int)SharelinkUserLink.LinkState.Linked;
-            }
-            else
-            {
-                state.LinkState = (int)SharelinkUserLink.LinkState.Asking;
-                await CreateNewLinkWithOtherUser(otherUserId, masterUserId, new SharelinkUserLink.State()
-                {
-                    LinkState = (int)SharelinkUserLink.LinkState.WaitToAccept
-                });
-            }
-            return await CreateNewLinkWithOtherUser(masterUserId, otherUserId, state);
-        }
-
-        public async Task<SharelinkUserLink> CreateNewLinkWithOtherUser(string masterUserId, string otherUserId, SharelinkUserLink.State state)
+        public async Task<SharelinkUserLink> CreateNewLinkWithOtherUser(string masterUserId, string otherUserId, SharelinkUserLink.State state,string noteName = null)
         {
             var mUOId = new ObjectId(masterUserId);
-            var otherUser = Task.Run(() => { return GetUserOfUserId(otherUserId); }).Result;
+            var otherUser = await GetUserOfUserId(otherUserId);
             var linkCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
             var newLink = new SharelinkUserLink()
             {
@@ -134,7 +111,7 @@ namespace TorontoService
                 StateDocument = state.ToJson(),
                 MasterUserObjectId = mUOId,
                 SlaveUserObjectId = otherUser.Id,
-                SlaveUserNoteName = otherUser.NickName
+                SlaveUserNoteName = noteName == null ? otherUser.NickName : noteName
             };
 
             await linkCollection.InsertOneAsync(newLink);
@@ -176,12 +153,12 @@ namespace TorontoService
             return result.NickName == newNick;
         }
 
-        public async Task<bool> UpdateUserProfileSignText(string userId,string newSign)
+        public async Task<bool> UpdateUserProfileMotto(string userId,string newMotto)
         {
             var userOId = new ObjectId(userId);
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            var result = await collection.FindOneAndUpdateAsync(usr => usr.Id == userOId, new UpdateDefinitionBuilder<SharelinkUser>().Set(u => u.SignText, newSign));
-            return result.SignText == newSign;
+            var result = await collection.FindOneAndUpdateAsync(usr => usr.Id == userOId, new UpdateDefinitionBuilder<SharelinkUser>().Set(u => u.Motto, newMotto));
+            return result.Motto == newMotto;
         }
 
         public async Task<bool> UpdateUserAvatar(string userId, string newAvatarId)

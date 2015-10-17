@@ -3,10 +3,7 @@
   "version": "1.0.0-*",
 
   "dependencies": {
-    "ChicagoClientLib": "1.0.0-*",
-    "CSharpClientFramework": "1.0.0-*",
-    "CSharpServerFrameworkAbstract": "1.0.0-*",
-    "CSServerJsonProtocol": "1.0.0-*",
+    "BahamutFireCommon": "1.0.0-*",
     "Microsoft.AspNet.Mvc": "6.0.0-beta7",
     "Microsoft.AspNet.Server.WebListener": "1.0.0-beta7",
     "Microsoft.AspNet.StaticFiles": "1.0.0-beta7",

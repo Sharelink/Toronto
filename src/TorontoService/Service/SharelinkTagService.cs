@@ -39,11 +39,6 @@ namespace TorontoService
             return result.ToList();
         }
 
-        public async Task<IList<SharelinkTag>> GetMyAllSharelinkTags(string userId)
-        {
-            return await GetUserSharelinkTags(userId);
-        }
-
         public async Task<SharelinkTag> CreateNewSharelinkTag(string userId,string tagName, string tagColor, string data,string isFocus)
         {
             var uId = new ObjectId(userId);

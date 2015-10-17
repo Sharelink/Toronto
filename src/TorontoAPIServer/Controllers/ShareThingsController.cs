@@ -26,21 +26,17 @@ namespace TorontoAPIServer.Controllers
         /// <param name="shareIds">filter, defalut nil</param>
         /// <returns></returns>
         [HttpGet]
-        public object Get(string newerThanThisTime,string olderThanThisTime,int page, int pageCount,string shareIds = null)
+        public async Task<object> Get(string newerThanThisTime, string olderThanThisTime, int page, int pageCount, string shareIds = null)
         {
 
             DateTime newerTime = DateTimeUtil.ToDate(newerThanThisTime);
             DateTime olderTime = DateTimeUtil.ToDate(olderThanThisTime);
             var service = this.UseShareService().GetShareService();
             var usrService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var things = Task.Run(() => {
-                return service.GetUserShareThings(UserSessionData.UserId, newerTime, olderTime, page, pageCount);
-            }).Result;
-            var users = Task.Run(() => 
-            {
-                return usrService.GetUserLinkedUsers(UserSessionData.UserId);
-            }).Result;
-            
+            var fireAccessService = Startup.ServicesProvider.GetFireAccesskeyService();
+            var things = await service.GetUserShareThings(UserSessionData.UserId, newerTime, olderTime, page, pageCount);
+            var users = await usrService.GetUserLinkedUsers(UserSessionData.UserId);
+
             var result = new object[things.Count];
             for (int i = 0; i < result.Length; i++)
             {
@@ -53,11 +49,11 @@ namespace TorontoAPIServer.Controllers
                     pShareId = thing.PShareId.ToString(),
                     userId = uId,
                     userNick = user.NoteName,
-                    avatarId = user.Avatar,
+                    avatarId = fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId,user.Avatar),
                     shareTime = DateTimeUtil.ToString(thing.ShareTime),
-                    shareType = thing.ShareType.ToString(),
+                    shareType = thing.ShareType,
                     title = thing.Title,
-                    shareContent = thing.ShareContent,
+                    shareContent = thing.ShareType == "film" ? fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, thing.ShareContent) : thing.ShareContent,
                     voteUsers = (from v in thing.Votes select v.UserId.ToString()).ToArray(),
                     lastActiveTime = DateTimeUtil.ToString(thing.LastActiveTime),
                     forTags = thing.Tags
@@ -66,21 +62,9 @@ namespace TorontoAPIServer.Controllers
             return result;
         }
 
-        /// <summary>
-        /// GET /ShareThings/1234/Reshares : get the reshares of 1234, with shareIds parameter,will only get the shares which in the shareIds
-        /// </summary>
-        /// <param name="shareId"></param>
-        /// <returns></returns>
-        [HttpGet("{shareId}/Reshares")]
-        public object Get(string shareId)
-        {
-            var service = this.UseShareService().GetShareService();
-            return service.GetShareThingReshares(shareId);
-        }
-
         // POST /ShareThings (pShareId, title, shareType,tags, shareContent) : post a new share,if pshareid equals 0, means not a reshare action
         [HttpPost]
-        public object Post(string pShareId, string title, string shareType,string tags, string shareContent)
+        public async Task<object> Post(string pShareId, string title, string shareType, string tags, string shareContent)
         {
             var service = this.UseShareService().GetShareService();
             var newShare = new ShareThing()
@@ -96,10 +80,7 @@ namespace TorontoAPIServer.Controllers
             {
                 newShare.PShareId = new ObjectId(pShareId);
             }
-            var itemWithId = Task.Run(async () =>
-            {
-                return await service.PostNewShareThing(newShare);
-            }).Result;
+            var itemWithId = await service.PostNewShareThing(newShare);
             return new { shareId = itemWithId.Id.ToString() };
         }
 

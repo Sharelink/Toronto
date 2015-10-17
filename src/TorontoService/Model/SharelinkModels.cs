@@ -20,7 +20,7 @@ namespace TorontoModel.MongodbModel
         public DateTime CreateTime { get; set; }
         public string Avatar { get; set; }
         public string PersonalVideo { get; set; }
-        public string SignText { get; set; }
+        public string Motto { get; set; }
         public ObjectId[] LinkedUsers { get; set; }
         public ObjectId[] SharelinkTags { get; set; }
     }
@@ -43,6 +43,17 @@ namespace TorontoModel.MongodbModel
         public Vote[] Votes { get; set; }
         public string[] Tags { get; set; }
         public DateTime LastActiveTime { get; set; }
+    }
+
+    public class LinkMessage
+    {
+        public string Id { get; set; }
+        public string SharelinkerId { get; set; }
+        public string SharelinkerNick { get; set; }
+        public string Type { get; set; }
+        public string Message { get; set; }
+        public string Avatar { get; set; }
+        public DateTime Time { get; set; }
     }
 
     public class ShareThingActiveRecord
@@ -86,6 +97,7 @@ namespace TorontoModel.MongodbModel
         public ObjectId Id { get; set; }
         public ObjectId SenderId { get; set; }
         public string ChatId { get; set; }
+        public string ShareId { get; set; }
         public string Message { get; set; }
         public string MessageData { get; set; }
         public string MessageType { get; set; }

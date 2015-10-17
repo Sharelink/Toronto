@@ -16,16 +16,14 @@ namespace TorontoAPIServer.Controllers
     public class TokensController : TorontoAPIController
     {
         [HttpGet]
-        public object Get(string appkey, string accountId, string accessToken)
+        public async Task<object> Get(string appkey, string accountId, string accessToken)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var result = Task.Run(() => {
-                return userService.GetUserOfAccountId(accountId);
-            });
+            var user = await userService.GetUserOfAccountId(accountId);
             try
             {
-                var userId = result.Result.Id.ToString();
+                var userId = user.Id.ToString();
                 var tokenResult = tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
                 if (tokenResult.Succeed)
                 {
@@ -43,7 +41,8 @@ namespace TorontoAPIServer.Controllers
                     Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     return tokenResult.Message;
                 }
-            }catch(NullReferenceException)
+            }
+            catch (NullReferenceException)
             {
                 return new
                 {
@@ -55,15 +54,18 @@ namespace TorontoAPIServer.Controllers
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 return "Server Error";
             }
-            
+
         }
 
         // DELETE api/values/5
         [HttpDelete]
-        public bool Delete(string appkey, string userId, string appToken)
+        public async Task<bool> Delete(string appkey, string userId, string appToken)
         {
-            var tokenService = Startup.ServicesProvider.GetTokenService();
-            return tokenService.ReleaseAppToken(appkey, userId, appToken);
+            return await Task.Run(() =>
+            {
+                var tokenService = Startup.ServicesProvider.GetTokenService();
+                return tokenService.ReleaseAppToken(appkey, userId, appToken);
+            });
         }
     }
 }

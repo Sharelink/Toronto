@@ -19,47 +19,14 @@ namespace TorontoAPIServer.Controllers
     {
         // GET: api/values
         [HttpGet("{chatId}")]
-        public object Get(string chatId,string newerThanTime)
+        public async Task<object[]> Get(string chatId, string newerThanTime)
         {
             var messageService = this.UseMessageService().GetMessageService();
-            var msgList = Task.Run(async () =>
-            {
-                return await messageService.GetMessage(UserSessionData.UserId, chatId, newerThanTime);
-            }).Result;
+            var msgList = await messageService.GetMessage(UserSessionData.UserId, chatId, newerThanTime);
             var messages = from m in msgList
                            select new
-                       {
-                           msgId = m.Id.ToString(),
-                           senderId = m.SenderId.ToString(),
-                           chatId = m.ChatId,
-                           data = m.MessageData,
-                           msg = m.Message,
-                           time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
-                           msgType = m.MessageType
-                       };
-            return messages;
-        }
-
-        [HttpDelete("New")]
-        public void DeleteNewMessages()
-        {
-            using (var msc = Startup.MessageCacheServerClientManager.GetClient())
-            {
-                var list = msc.As<SharelinkMessage>().Lists[UserSessionData.UserId];
-                msc.As<SharelinkMessage>().RemoveAllFromList(list);
-            }
-        }
-
-        [HttpGet("New")]
-        public object GetNewMessage()
-        {
-            using (var msc = Startup.MessageCacheServerClientManager.GetClient())
-            {
-                var list = msc.As<SharelinkMessage>().Lists[UserSessionData.UserId];
-                var msgList = msc.As<SharelinkMessage>().GetAllItemsFromList(list);
-                var messages = from m in msgList
-                           select new
                            {
+                               shareId = m.ShareId,
                                msgId = m.Id.ToString(),
                                senderId = m.SenderId.ToString(),
                                chatId = m.ChatId,
@@ -68,17 +35,55 @@ namespace TorontoAPIServer.Controllers
                                time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
                                msgType = m.MessageType
                            };
-                msc.As<SharelinkMessage>().RemoveAllFromList(list);
-                return messages;
-            }
+            return messages.ToArray();
+        }
+
+        [HttpDelete("New")]
+        public async void DeleteNewMessages()
+        {
+            await Task.Run(() =>
+            {
+                using (var msc = Startup.MessageCacheServerClientManager.GetClient())
+                {
+                    var list = msc.As<SharelinkMessage>().Lists[UserSessionData.UserId];
+                    msc.As<SharelinkMessage>().RemoveAllFromList(list);
+                }
+            });
+        }
+
+        [HttpGet("New")]
+        public async Task<object[]> GetNewMessage()
+        {
+            return await Task.Run(() =>
+            {
+                using (var msc = Startup.MessageCacheServerClientManager.GetClient())
+                {
+                    var list = msc.As<SharelinkMessage>().Lists[UserSessionData.UserId];
+                    var msgList = msc.As<SharelinkMessage>().GetAllItemsFromList(list);
+                    var messages = from m in msgList
+                                   select new
+                                   {
+                                       msgId = m.Id.ToString(),
+                                       senderId = m.SenderId.ToString(),
+                                       shareId = m.ShareId,
+                                       chatId = m.ChatId,
+                                       data = m.MessageData,
+                                       msg = m.Message,
+                                       time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
+                                       msgType = m.MessageType
+                                   };
+                    msc.As<SharelinkMessage>().RemoveAllFromList(list);
+                    return messages.ToArray();
+                }
+            });
         }
 
         // POST api/values
         [HttpPost("{chatId}")]
-        public object Post(string message,string chatId,string type, string messageData,string time,string audienceId,string shareId)
+        public async Task<object> Post(string message, string chatId, string type, string messageData, string time, string audienceId, string shareId)
         {
             var messageService = this.UseMessageService().GetMessageService();
-            
+
             var msg = new SharelinkMessage()
             {
                 Message = message,
@@ -86,34 +91,30 @@ namespace TorontoAPIServer.Controllers
                 MessageType = type,
                 SenderId = new ObjectId(UserSessionData.UserId),
                 Time = DateTimeUtil.ToDate(time),
-                ChatId = chatId
+                ChatId = chatId,
+                ShareId = shareId
             };
             var sendUserOId = new ObjectId(UserSessionData.UserId);
-            var newmsgId = Task.Run(async () =>
+            var chat = await messageService.GetOrCreateChat(chatId, UserSessionData.UserId, shareId, audienceId);
+            msg = await messageService.NewMessage(msg);
+            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
             {
-                var chat = await messageService.GetOrCreateChat(chatId, UserSessionData.UserId, shareId, audienceId);
-                msg = await messageService.NewMessage(msg);
-                using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
+                using (var msc = Startup.MessageCacheServerClientManager.GetClient())
                 {
-                    using (var msc = Startup.MessageCacheServerClientManager.GetClient())
+                    foreach (var user in chat.UserIds)
                     {
-                        foreach (var user in chat.UserIds)
+                        if (user != sendUserOId)
                         {
-                            if (user != sendUserOId)
-                            {
-                                msc.As<SharelinkMessage>().Lists[UserSessionData.UserId].Add(msg);
-                                psClient.PublishMessage(UserSessionData.UserId, chatId);
-                            }
+                            msc.As<SharelinkMessage>().Lists[UserSessionData.UserId].Add(msg);
+                            psClient.PublishMessage(UserSessionData.UserId, "ChatMessage:" + chatId);
                         }
                     }
-                    
                 }
-                
-                return msg.Id.ToString();
-            }).Result;
+
+            }
             return new
             {
-                msgId = newmsgId
+                msgId = msg.Id.ToString()
             };
         }
 

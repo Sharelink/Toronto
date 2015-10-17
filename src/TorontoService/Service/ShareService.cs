@@ -82,12 +82,6 @@ namespace TorontoService
             return result;
         }
 
-
-        public ShareThing[] GetShareThingReshares(string shareId)
-        {
-            return null;
-        }
-
         public async Task<IList<Vote>> GetVoteOfShare(string userId, string shareId)
         {
             var sId = new ObjectId(shareId);
