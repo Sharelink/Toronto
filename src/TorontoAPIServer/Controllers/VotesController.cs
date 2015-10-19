@@ -31,7 +31,7 @@ namespace TorontoAPIServer.Controllers
                         new ShareThingUpdatedMessage()
                         {
                             ShareId = share.Id,
-                            Time = DateTime.Now
+                            Time = DateTime.UtcNow
                         });
                 }
             }

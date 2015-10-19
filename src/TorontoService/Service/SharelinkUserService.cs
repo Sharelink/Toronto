@@ -107,7 +107,7 @@ namespace TorontoService
             var linkCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUserLink>("SharelinkUserLink");
             var newLink = new SharelinkUserLink()
             {
-                CreateTime = DateTime.Now,
+                CreateTime = DateTime.UtcNow,
                 StateDocument = state.ToJson(),
                 MasterUserObjectId = mUOId,
                 SlaveUserObjectId = otherUser.Id,

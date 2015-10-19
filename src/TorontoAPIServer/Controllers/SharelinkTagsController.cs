@@ -56,8 +56,8 @@ namespace TorontoAPIServer.Controllers
             {
                 var newShare = new ShareThing()
                 {
-                    LastActiveTime = DateTime.Now,
-                    ShareTime = DateTime.Now,
+                    LastActiveTime = DateTime.UtcNow,
+                    ShareTime = DateTime.UtcNow,
                     ShareType = "message",
                     UserId = userId,
                     ShareContent = r.TagName
@@ -73,7 +73,7 @@ namespace TorontoAPIServer.Controllers
                     var newMail = new ShareThingMail()
                     {
                         ShareId = newShare.Id,
-                        Time = DateTime.Now,
+                        Time = DateTime.UtcNow,
                         ToSharelinker = linker
                     };
                     newMails.Add(newMail);

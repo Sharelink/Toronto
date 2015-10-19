@@ -26,7 +26,7 @@ namespace TorontoAPIServer.Controllers
                 {
                     AccountId = accountId,
                     NickName = nickName,
-                    CreateTime = DateTime.Now,
+                    CreateTime = DateTime.UtcNow,
                     NoteName = nickName,
                     Motto = motto
                 };

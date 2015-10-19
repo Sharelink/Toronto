@@ -29,7 +29,7 @@ namespace TorontoService
         public async Task<ShareThing> UpdateShareLastActiveTime(ObjectId objectId)
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
-            var share = await shareThingCollection.FindOneAndUpdateAsync(t => t.Id == objectId, new UpdateDefinitionBuilder<ShareThing>().Set(st => st.LastActiveTime, DateTime.Now));
+            var share = await shareThingCollection.FindOneAndUpdateAsync(t => t.Id == objectId, new UpdateDefinitionBuilder<ShareThing>().Set(st => st.LastActiveTime, DateTime.UtcNow));
             return share;
         }
 
@@ -42,12 +42,11 @@ namespace TorontoService
         public async Task<IList<ShareThingMail>> GetUserShareMails(string userId, DateTime beginTime, DateTime endTime, int page, int pageCount)
         {
             var shareThingMailCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingMail>("ShareThingMail");
-            
             var uOId = new ObjectId(userId);
             var shareUserService = new SharelinkUserService(Client);
             var shareTagService = new SharelinkTagService(Client);
-
-            var shareMails = await shareThingMailCollection.FindAsync(m => m.Time >= beginTime && m.Time < endTime);
+            var filterBuilder = new FilterDefinitionBuilder<ShareThingMail>();
+            var shareMails = await shareThingMailCollection.FindAsync(m =>m.ToSharelinker == uOId && m.Time >= beginTime && m.Time < endTime);
             var mails = await shareMails.ToListAsync();
             if (page == -1)
             {
@@ -88,7 +87,7 @@ namespace TorontoService
             var newVote = new Vote()
             {
                 UserId = new ObjectId(userId),
-                VoteTime = DateTime.Now
+                VoteTime = DateTime.UtcNow
             };
             var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().Push(ts => ts.Votes, newVote));
 

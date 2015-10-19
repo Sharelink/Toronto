@@ -74,10 +74,10 @@ namespace TorontoAPIServer.Controllers
                     SharelinkerId = UserSessionData.UserId,
                     Type = "acceptlink",
                     Avatar = me.Avatar,
-                    Id = DateTime.Now.Ticks.ToString(),
+                    Id = DateTime.UtcNow.Ticks.ToString(),
                     Message = "accept",
                     SharelinkerNick = me.NickName,
-                    Time = DateTime.Now
+                    Time = DateTime.UtcNow
                 };
                 messageCache.As<LinkMessage>().Lists[sharelinkerId].Add(linkreq);
                 using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
@@ -163,13 +163,13 @@ namespace TorontoAPIServer.Controllers
 
                     var linkreq = new LinkMessage()
                     {
-                        Id = DateTime.Now.Ticks.ToString(),
+                        Id = DateTime.UtcNow.Ticks.ToString(),
                         SharelinkerId = UserSessionData.UserId,
                         SharelinkerNick = user.NickName,
                         Type = "asklink",
                         Message = msg,
                         Avatar = user.Avatar,
-                        Time = DateTime.Now
+                        Time = DateTime.UtcNow
                     };
                     messageCache.As<LinkMessage>().Lists[otherUserId].Add(linkreq);
                 }

@@ -105,8 +105,9 @@ namespace TorontoAPIServer.Controllers
                     {
                         if (user != sendUserOId)
                         {
-                            msc.As<SharelinkMessage>().Lists[UserSessionData.UserId].Add(msg);
-                            psClient.PublishMessage(UserSessionData.UserId, "ChatMessage:" + chatId);
+                            var idstr = user.ToString();
+                            msc.As<SharelinkMessage>().Lists[idstr].Add(msg);
+                            psClient.PublishMessage(idstr, "ChatMessage:" + chatId);
                         }
                     }
                 }

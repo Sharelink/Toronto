@@ -62,7 +62,7 @@ namespace TorontoService
                 {
                     if (isTagMatch(tag1, tag2))
                     {
-                        var t = Tuple.Create<string, string>(tag1, tag2);
+                        var t = Tuple.Create(tag1, tag2);
                         result.Add(t);
                     }
                 }
@@ -86,7 +86,7 @@ namespace TorontoService
                 Data = data,
                 IsFocus = isFocus == null ? false : bool.Parse(isFocus),
                 UserId = uId,
-                LastActiveTime = DateTime.Now
+                LastActiveTime = DateTime.UtcNow
             };
             var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
@@ -131,7 +131,7 @@ namespace TorontoService
 
             if (isFocus != null || !string.IsNullOrWhiteSpace(newTagName))
             {
-                var u = update.Set(tt => tt.LastActiveTime, DateTime.Now);
+                var u = update.Set(tt => tt.LastActiveTime, DateTime.UtcNow);
                 uList.Add(u);
             }
 

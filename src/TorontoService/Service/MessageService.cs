@@ -49,7 +49,7 @@ namespace TorontoService
                 {
                     ChatId = chatId,
                     ShareId = new ObjectId(shareId),
-                    Time = DateTime.Now,
+                    Time = DateTime.UtcNow,
                     UserIds = new ObjectId[] { new ObjectId(userId), new ObjectId(audienceId) }
                 };
                 await ChatCollection.InsertOneAsync(newChat);
