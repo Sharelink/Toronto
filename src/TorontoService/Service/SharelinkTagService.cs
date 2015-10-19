@@ -22,21 +22,58 @@ namespace TorontoService
         public async Task<IList<SharelinkTag>> GetUserSharelinkTags(string userId)
         {
             var userOId = new ObjectId(userId);
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
-            var me = await collection.Find(u => u.Id == userOId).FirstAsync();
-            var tagIds = me.SharelinkTags;
-            var filter = new FilterDefinitionBuilder<SharelinkTag>().In( t => t.Id, tagIds);
 
             //Cache this data
-            return await collectionTag.Find(filter).ToListAsync();
+            return await collectionTag.Find(t => t.UserId == userOId).ToListAsync();
+        }
+
+        public async Task<IDictionary<ObjectId, IEnumerable<SharelinkTag>>> GetLinkersTags(IEnumerable<ObjectId> linkerIds)
+        {
+            var result = new Dictionary<ObjectId, IEnumerable<SharelinkTag>>();
+            var tagCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
+
+            var filter = new FilterDefinitionBuilder<SharelinkTag>().In(t=>t.UserId, linkerIds);
+            var tags = await tagCollection.Find(filter).ToListAsync();
+            var tagsGrouped = from t in tags group t by t.UserId;
+            foreach (var item in tagsGrouped)
+            {
+                result.Add(item.Key, item.ToList());
+            }
+            return result;
         }
 
         public async Task<IList<SharelinkTag>> GetUserFocusTags(string userId)
         {
-            var tags = await GetUserSharelinkTags(userId);
-            var result = from t in tags where t.IsFocus select t;
-            return result.ToList();
+            var userOId = new ObjectId(userId);
+            var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
+
+            //Cache this data
+            return await collectionTag.Find(t => t.UserId == userOId && t.IsFocus).ToListAsync();
+        }
+
+        public IEnumerable<Tuple<string, string>> MatchTags(IEnumerable<string> tagCollection1, IEnumerable<string> tagColleciton2)
+        {
+            var result = new List<Tuple<string, string>>();
+
+            foreach (var tag1 in tagCollection1)
+            {
+                foreach (var tag2 in tagColleciton2)
+                {
+                    if (isTagMatch(tag1, tag2))
+                    {
+                        var t = Tuple.Create<string, string>(tag1, tag2);
+                        result.Add(t);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private bool isTagMatch(string tag1, string tag2)
+        {
+            return tag1 == tag2;
         }
 
         public async Task<SharelinkTag> CreateNewSharelinkTag(string userId,string tagName, string tagColor, string data,string isFocus)
@@ -55,7 +92,7 @@ namespace TorontoService
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             await collectionTag.InsertOneAsync(newTag);
             var res = await collection.UpdateOneAsync(u => u.Id == uId, 
-                new UpdateDefinitionBuilder<SharelinkUser>().AddToSet(su => su.SharelinkTags, newTag.Id));
+                new UpdateDefinitionBuilder<SharelinkUser>().Push(su => su.SharelinkTags, newTag.Id));
             return newTag;
         }
 
@@ -107,12 +144,6 @@ namespace TorontoService
             {
                 return false;
             }
-        }
-
-        public async Task<IEnumerable<string>> GetMyTagNames(string userId)
-        {
-            var userShareLinkTags = await GetUserSharelinkTags(userId);
-            return from mt in userShareLinkTags select mt.TagName;
         }
 
         public async Task<bool> DeleteSharelinkTags(string userId, string[] tagIds)

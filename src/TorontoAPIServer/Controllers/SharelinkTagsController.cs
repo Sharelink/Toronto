@@ -49,6 +49,7 @@ namespace TorontoAPIServer.Controllers
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var shareService = this.UseShareService().GetShareService();
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             var userId = new ObjectId(UserSessionData.UserId);
             var r = await sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId, tagName, tagColor, data, isFocus);
             if (bool.Parse(isFocus))
@@ -62,6 +63,22 @@ namespace TorontoAPIServer.Controllers
                     ShareContent = r.TagName
                 };
                 await shareService.PostNewShareThing(newShare);
+
+                var linkers = await userService.GetUserlinksOfUserId(UserSessionData.UserId);
+                var linkerIds = from l in linkers select l.SlaveUserObjectId;
+
+                var newMails = new List<ShareThingMail>();
+                foreach (var linker in linkerIds)
+                {
+                    var newMail = new ShareThingMail()
+                    {
+                        ShareId = newShare.Id,
+                        Time = DateTime.Now,
+                        ToSharelinker = linker
+                    };
+                    newMails.Add(newMail);
+                }
+                shareService.InsertMails(newMails);
             }
             var res = new
             {

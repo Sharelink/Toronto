@@ -45,6 +45,21 @@ namespace TorontoModel.MongodbModel
         public DateTime LastActiveTime { get; set; }
     }
 
+    public class ShareThingUpdatedMessage
+    {
+        public ObjectId ShareId { get; set; }
+        public DateTime Time { get; set; }
+    }
+
+    public class ShareThingMail
+    {
+        public ObjectId Id { get; set; }
+        public ObjectId ShareId { get; set; }
+        public ObjectId ToSharelinker { get; set; }
+        public IEnumerable<string> Tags { get; set; }
+        public DateTime Time { get; set; }
+    }
+
     public class LinkMessage
     {
         public string Id { get; set; }
@@ -54,16 +69,6 @@ namespace TorontoModel.MongodbModel
         public string Message { get; set; }
         public string Avatar { get; set; }
         public DateTime Time { get; set; }
-    }
-
-    public class ShareThingActiveRecord
-    {
-        public ObjectId Id { get; set; }
-        public ObjectId ShareId { get; set; }
-        public ObjectId ShareUserId { get; set; }
-        public ObjectId OperateUserId { get; set; }
-        public DateTime Time { get; set; }
-        public string Operate { get; set; }
     }
 
     public enum MessageType

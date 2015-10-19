@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using TorontoModel.MongodbModel;
 using TorontoService;
 using System.Net;
+using MongoDB.Bson;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,7 +21,20 @@ namespace TorontoAPIServer.Controllers
         public async void Post(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            shareService.MarkARecordForShareThing(new MongoDB.Bson.ObjectId(shareId), new MongoDB.Bson.ObjectId(UserSessionData.UserId), "vote");
+            var share = await shareService.UpdateShareLastActiveTime(new ObjectId(shareId));
+            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
+            {
+                psClient.PublishMessage(share.UserId.ToString(), string.Format("ShareThingMessage:{0}", shareId));
+                using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
+                {
+                    msgClient.As<ShareThingUpdatedMessage>().Lists[share.UserId.ToString()].Add(
+                        new ShareThingUpdatedMessage()
+                        {
+                            ShareId = share.Id,
+                            Time = DateTime.Now
+                        });
+                }
+            }
             var isSuc = await shareService.VoteShare(UserSessionData.UserId, shareId);
             if (!isSuc)
             {

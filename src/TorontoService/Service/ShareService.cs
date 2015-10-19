@@ -23,63 +23,46 @@ namespace TorontoService
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             await shareThingCollection.InsertOneAsync(newShareThing);
-            MarkARecordForShareThing(newShareThing.Id, newShareThing.UserId,"new share");
             return newShareThing;
         }
 
-        public async void MarkARecordForShareThing(ObjectId shareId, ObjectId userId, string operate = "mark")
+        public async Task<ShareThing> UpdateShareLastActiveTime(ObjectId objectId)
         {
-            var activeRecordCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingActiveRecord>("ShareThingActiveRecord");
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
-            var shareThing = await shareThingCollection.Find(st => st.Id == shareId).FirstAsync();
-            
-            var newRecord = new ShareThingActiveRecord()
-            {
-                Operate = operate,
-                OperateUserId = userId,
-                ShareId = shareId,
-                ShareUserId = shareThing.UserId,
-                Time = DateTime.Now
-            };
-            await activeRecordCollection.InsertOneAsync(newRecord);
+            var share = await shareThingCollection.FindOneAndUpdateAsync(t => t.Id == objectId, new UpdateDefinitionBuilder<ShareThing>().Set(st => st.LastActiveTime, DateTime.Now));
+            return share;
         }
 
-        public async Task<IList<ShareThing>> GetUserShareThings(string userId, DateTime newerThanThisTime, DateTime olderThanThisTime, int page, int pageCount)
+        public async void InsertMails(IEnumerable<ShareThingMail> mails)
         {
-            var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
-            var activeRecordCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingActiveRecord>("ShareThingActiveRecord");
+            var shareThingMailCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingMail>("ShareThingMail");
+            await shareThingMailCollection.InsertManyAsync(mails);
+        }
 
+        public async Task<IList<ShareThingMail>> GetUserShareMails(string userId, DateTime beginTime, DateTime endTime, int page, int pageCount)
+        {
+            var shareThingMailCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingMail>("ShareThingMail");
+            
             var uOId = new ObjectId(userId);
             var shareUserService = new SharelinkUserService(Client);
             var shareTagService = new SharelinkTagService(Client);
-            var linkedUserIds =from u in  (await shareUserService.GetLinkedUsersOfUserId(userId)) select u.Id;
-            var myTags = await shareTagService.GetMyTagNames(userId);
 
-            var inFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().In("ShareUserId", linkedUserIds);
-            var timeNewFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().Gt("Time", newerThanThisTime);
-            var timeOldFilter = new FilterDefinitionBuilder<ShareThingActiveRecord>().Lt("Time", olderThanThisTime);
-            IList<ShareThingActiveRecord> records = null;
-            if (newerThanThisTime.Ticks > 0)
+            var shareMails = await shareThingMailCollection.FindAsync(m => m.Time >= beginTime && m.Time < endTime);
+            var mails = await shareMails.ToListAsync();
+            if (page == -1)
             {
-                records = await activeRecordCollection.Find(inFilter & timeNewFilter).ToListAsync();
+                return mails.ToArray();
             }
-            else if (olderThanThisTime.Ticks > 0)
-            {
-                records = await activeRecordCollection.Find(inFilter & timeOldFilter).ToListAsync();
-            }
-            var shareIds = from r in records select r.ShareId;
-            var sInFilter =new FilterDefinitionBuilder<ShareThing>().In(s => s.Id,shareIds) & (
-                new FilterDefinitionBuilder<ShareThing>().Eq( s => s.UserId, uOId ) |
-                new FilterDefinitionBuilder<ShareThing>().AnyIn(t => t.Tags, myTags)|
-                new FilterDefinitionBuilder<ShareThing>().AnyEq(t => t.Tags, "all"));
-            var result = await shareThingCollection.Find(sInFilter).ToListAsync();
-            for (int i = 0; i < result.Count; i++)
-            {
-                var item = result[i];
-                item.Votes = (from v in item.Votes where linkedUserIds.Contains(v.UserId) select v).ToArray();
-                item.LastActiveTime = records[i].Time;
-            }
-            return result;
+            var result = from m in mails orderby m.Time descending select m;
+            return result.Skip(page * pageCount).Take(pageCount).ToArray();
+        }
+
+        public async Task<IList<ShareThing>> GetShares(IEnumerable<ObjectId> shareIds)
+        {
+            var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
+            var fileter = new FilterDefinitionBuilder<ShareThing>().In(s => s.Id, shareIds);
+            var shareThings = await shareThingCollection.FindAsync(fileter);
+            return await shareThings.ToListAsync();
         }
 
         public async Task<IList<Vote>> GetVoteOfShare(string userId, string shareId)
