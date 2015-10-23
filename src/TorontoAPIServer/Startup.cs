@@ -38,10 +38,11 @@ namespace TorontoAPIServer
         {
             // Setup configuration sources.
 
-            var builder = new ConfigurationBuilder(appEnv.ApplicationBasePath)
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(appEnv.ApplicationBasePath)
                 .AddJsonFile("config.json")
+                .AddIniFile("hosting.ini")
                 .AddEnvironmentVariables();
-            builder.AddIniFile("hosting.ini").AddEnvironmentVariables();
             Configuration = builder.Build();
             FileApiUrl = "http://192.168.1.67:8089";
             Appkey = Configuration["Data:App:appkey"];

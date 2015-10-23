@@ -7,8 +7,6 @@
   "licenseUrl": "",
 
   "dependencies": {
-    "TorontoCacheManager": "1.0.0-*",
-    "TorontoDataManager": "1.0.0-*",
     "BahamutService": "1.0.0-*"
   },
 

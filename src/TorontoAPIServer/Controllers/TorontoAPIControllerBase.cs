@@ -19,7 +19,7 @@ namespace TorontoAPIServer.Controllers
         private IBahamutServiceProvider _torontoServiceProvider;
         public AccountSessionData UserSessionData
         {
-            get { return Context.Items["AccountSessionData"] as AccountSessionData; }
+            get { return Request.HttpContext.Items["AccountSessionData"] as AccountSessionData; }
         }
 
         public IBahamutServiceProvider ServiceProvider
