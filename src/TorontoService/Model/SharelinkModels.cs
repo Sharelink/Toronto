@@ -42,7 +42,6 @@ namespace TorontoModel.MongodbModel
         public string ShareType { get; set; }
         public Vote[] Votes { get; set; }
         public string[] Tags { get; set; }
-        public DateTime LastActiveTime { get; set; }
     }
 
     public class ShareThingUpdatedMessage

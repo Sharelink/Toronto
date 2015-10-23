@@ -56,7 +56,6 @@ namespace TorontoAPIServer.Controllers
             {
                 var newShare = new ShareThing()
                 {
-                    LastActiveTime = DateTime.UtcNow,
                     ShareTime = DateTime.UtcNow,
                     ShareType = "message",
                     UserId = userId,

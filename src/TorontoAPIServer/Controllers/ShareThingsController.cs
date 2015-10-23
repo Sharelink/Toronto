@@ -69,7 +69,6 @@ namespace TorontoAPIServer.Controllers
                     title = share.Title,
                     shareContent = share.ShareType == "film" ? fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, share.ShareContent) : share.ShareContent,
                     voteUsers = (from v in share.Votes select v.UserId.ToString()).ToArray(),
-                    lastActiveTime = DateTimeUtil.ToString(share.LastActiveTime),
                     forTags = share.Tags
                 });
             }
@@ -117,8 +116,6 @@ namespace TorontoAPIServer.Controllers
         public async Task<object> Post(string pShareId, string title, string shareType, string tags, string shareContent)
         {
             var service = this.UseShareService().GetShareService();
-            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var newShare = new ShareThing()
             {
                 ShareTime = DateTime.UtcNow,
@@ -126,8 +123,7 @@ namespace TorontoAPIServer.Controllers
                 UserId = new ObjectId(UserSessionData.UserId),
                 ShareType = shareType,
                 ShareContent = shareContent,
-                Tags = tags.Split('#'),
-                LastActiveTime = DateTime.UtcNow
+                Tags = tags.Split('#')
             };
 
             if (pShareId != null)
@@ -135,16 +131,29 @@ namespace TorontoAPIServer.Controllers
                 newShare.PShareId = new ObjectId(pShareId);
             }
             newShare = await service.PostNewShareThing(newShare);
+            return new { shareId = newShare.Id.ToString() };
+        }
 
+        // POST /ShareThings/Finished/{shareId} (taskSuccess) : if taskSuccess, post mail to linkers who focus this share's tags
+        [HttpPost("Finished/{shareId}")]
+        public async Task<object> FinishedPostShare(string shareId,string taskSuccess)
+        {
+            if (taskSuccess != "true")
+            {
+                return new { message = "ok" };
+            }
+            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
+            var service = this.UseShareService().GetShareService();
+            var newShare = (await service.GetShares(new ObjectId[] { new ObjectId(shareId) })).First();
+            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
             var linkers = await userService.GetUserlinksOfUserId(UserSessionData.UserId);
             var linkerIds = from l in linkers select l.SlaveUserObjectId;
             var linkersTags = await tagService.GetLinkersTags(linkerIds);
-
             var mails = new List<ShareThingMail>();
             foreach (var linkerTags in linkersTags)
             {
                 var linkTagDatas = from lt in linkerTags.Value select lt.Data;
-                
+
                 if (linkerTags.Key == newShare.UserId)
                 {
                     var mail = new ShareThingMail()
@@ -172,9 +181,28 @@ namespace TorontoAPIServer.Controllers
                     }
                 }
             }
-            service.InsertMails(mails);
-            return new { shareId = newShare.Id.ToString() };
-        }
 
+            service.InsertMails(mails);
+            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
+            {
+                using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
+                {
+                    foreach (var m in mails)
+                    {
+                        var sharelinker = m.ToSharelinker.ToString();
+                        msgClient.As<ShareThingUpdatedMessage>().Lists[sharelinker].Add(
+                        new ShareThingUpdatedMessage()
+                        {
+                            ShareId = m.ShareId,
+                            Time = DateTime.UtcNow
+                        });
+                        psClient.PublishMessage(sharelinker, string.Format("ShareThingMessage:{0}", shareId));
+                    }
+
+                }
+            }
+            
+            return new { message = "ok" };
+        }
     }
 }

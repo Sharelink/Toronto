@@ -26,13 +26,6 @@ namespace TorontoService
             return newShareThing;
         }
 
-        public async Task<ShareThing> UpdateShareLastActiveTime(ObjectId objectId)
-        {
-            var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
-            var share = await shareThingCollection.FindOneAndUpdateAsync(t => t.Id == objectId, new UpdateDefinitionBuilder<ShareThing>().Set(st => st.LastActiveTime, DateTime.UtcNow));
-            return share;
-        }
-
         public async void InsertMails(IEnumerable<ShareThingMail> mails)
         {
             var shareThingMailCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingMail>("ShareThingMail");
@@ -60,7 +53,7 @@ namespace TorontoService
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var fileter = new FilterDefinitionBuilder<ShareThing>().In(s => s.Id, shareIds);
-            var shareThings = await shareThingCollection.FindAsync(fileter);
+            var shareThings = shareThingCollection.Find(fileter);
             return await shareThings.ToListAsync();
         }
 
@@ -80,7 +73,7 @@ namespace TorontoService
             return result.ToList();
         }
 
-        public async Task<bool> VoteShare(string userId, string shareId)
+        public async Task<ShareThing> VoteShare(string userId, string shareId)
         {
             var sId = new ObjectId(shareId);
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
@@ -89,19 +82,20 @@ namespace TorontoService
                 UserId = new ObjectId(userId),
                 VoteTime = DateTime.UtcNow
             };
-            var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, new UpdateDefinitionBuilder<ShareThing>().Push(ts => ts.Votes, newVote));
+            var update = new UpdateDefinitionBuilder<ShareThing>().Push(ts => ts.Votes, newVote);
+            var result = await shareThingCollection.FindOneAndUpdateAsync(s => s.Id == sId, update);
 
-            return result.ModifiedCount > 0;
+            return result;
         }
 
-        public async Task<bool> UnvoteShare(string userId, string shareId)
+        public async Task<ShareThing> UnvoteShare(string userId, string shareId)
         {
             var sId = new ObjectId(shareId);
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var UserId = new ObjectId(userId);
             var op = new UpdateDefinitionBuilder<ShareThing>().PullFilter(t => t.Votes, t => t.UserId == UserId);
-            var result = await shareThingCollection.UpdateOneAsync(s => s.Id == sId, op);
-            return result.ModifiedCount > 0;
+            var result = await shareThingCollection.FindOneAndUpdateAsync(s => s.Id == sId, op);
+            return result;
         }
     }
 

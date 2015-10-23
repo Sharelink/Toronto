@@ -21,10 +21,9 @@ namespace TorontoAPIServer.Controllers
         public async void Post(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            var share = await shareService.UpdateShareLastActiveTime(new ObjectId(shareId));
+            var share = await shareService.VoteShare(UserSessionData.UserId, shareId);
             using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
             {
-                psClient.PublishMessage(share.UserId.ToString(), string.Format("ShareThingMessage:{0}", shareId));
                 using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
                 {
                     msgClient.As<ShareThingUpdatedMessage>().Lists[share.UserId.ToString()].Add(
@@ -34,11 +33,8 @@ namespace TorontoAPIServer.Controllers
                             Time = DateTime.UtcNow
                         });
                 }
-            }
-            var isSuc = await shareService.VoteShare(UserSessionData.UserId, shareId);
-            if (!isSuc)
-            {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                psClient.PublishMessage(share.UserId.ToString(), string.Format("ShareThingMessage:{0}", shareId));
+                
             }
         }
 
@@ -47,11 +43,7 @@ namespace TorontoAPIServer.Controllers
         public async void Delete(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
-            var isSuc = await shareService.UnvoteShare(UserSessionData.UserId, shareId);
-            if (!isSuc)
-            {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            }
+            await shareService.UnvoteShare(UserSessionData.UserId, shareId);
         }
     }
 }
