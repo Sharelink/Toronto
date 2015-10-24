@@ -2,33 +2,38 @@
   "Data": {
     "App": {
       "appname": "TorontoAPIServer",
-      "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b"
+      "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b",
+      "url": "http://www.sharelink.online:8088"
     },
     "SharelinkDBServer": {
-      "Url": "mongodb://192.168.1.23:27017"
+      "url": "mongodb://db.sharelink.online:27017"
     },
     "BahamutDBConnection": {
-      "connectionString": "server=192.168.1.23;user id=root;password=dfyybest;persistsecurityinfo=True;database=BahamutDB;Pooling=true; Max Pool Size=50;"
+      "connectionString": "server=bahamutdb.sharelink.online;user id=root;password=sharelinkbest;persistsecurityinfo=True;database=BahamutDB;Pooling=true; Max Pool Size=50;"
     },
     "TokenServer": {
-      "url": "redis://192.168.1.23:6379"
+      "url": "redis://token.sharelink.online:6379"
     },
 
     "ControlServiceServer": {
-      "url": "redis://192.168.1.23:6379"
+      "url": "redis://app.sharelink.online:6379"
     },
 
     "MessagePubSubServer": {
-      "url": "redis://192.168.1.23:6379"
+      "url": "redis://pubsub.sharelink.online:6379"
     },
 
     "MessageCacheServer": {
-      "url": "redis://192.168.1.23:6379"
+      "url": "redis://msg.sharelink.online:6379"
     },
 
     "ChicagoServer": {
-      "address": "192.168.1.67",
+      "host": "chicago.sharelink.online",
       "port": 6789
+    },
+
+    "FileServer": {
+      "url": "file.sharelink.online:8089"
     }
   }
   

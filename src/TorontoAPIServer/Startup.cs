@@ -41,20 +41,19 @@ namespace TorontoAPIServer
             var builder = new ConfigurationBuilder()
                 .SetBasePath(appEnv.ApplicationBasePath)
                 .AddJsonFile("config.json")
-                .AddIniFile("hosting.ini")
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
-            FileApiUrl = "http://192.168.1.67:8089";
+            FileApiUrl = Configuration["Data:FileServer:url"];
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
-            Server = Configuration["server.urls"];
+            Server = Configuration["Data:App:url"];
             APIUrl = Server + "/api";
             SharelinkDBConfig = new MongoDbServerConfig()
             {
-                Url = Configuration["Data:SharelinkDBServer:Url"]
+                Url = Configuration["Data:SharelinkDBServer:url"]
             };
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
-            ChicagoServerAddress = Configuration["Data:ChicagoServer:address"];
+            ChicagoServerAddress = Configuration["Data:ChicagoServer:host"];
             ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
         }
 
