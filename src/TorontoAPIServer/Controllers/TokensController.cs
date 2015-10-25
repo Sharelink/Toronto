@@ -23,10 +23,17 @@ namespace TorontoAPIServer.Controllers
             var user = await userService.GetUserOfAccountId(accountId);
             try
             {
-                var userId = user.Id.ToString();
+                string userId = user == null ? null : user.Id.ToString();
                 var tokenResult = tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
                 if (tokenResult.Succeed)
                 {
+                    if (userId == null)
+                    {
+                        return new
+                        {
+                            RegistAPIServer = Startup.Server
+                        };
+                    }
                     return new
                     {
                         AppToken = tokenResult.UserSessionData.AppToken,
@@ -41,13 +48,6 @@ namespace TorontoAPIServer.Controllers
                     Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     return tokenResult.Message;
                 }
-            }
-            catch (NullReferenceException)
-            {
-                return new
-                {
-                    RegistAPIServer = Startup.Server
-                };
             }
             catch (Exception)
             {
