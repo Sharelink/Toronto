@@ -3,7 +3,7 @@
     "App": {
       "appname": "TorontoAPIServer",
       "appkey": "5e6c827f2fcb04e8fca80cf72db5ba004508246b",
-      "url": "http://www.sharelink.online:8088"
+      "url": "http://api.sharelink.online:8088"
     },
     "SharelinkDBServer": {
       "url": "mongodb://db.sharelink.online:27017"
