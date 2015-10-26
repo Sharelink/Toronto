@@ -20,20 +20,25 @@ namespace TorontoAPIServer.Controllers
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var user = await userService.GetUserOfAccountId(accountId);
             try
             {
+                var user = await userService.GetUserOfAccountId(accountId);
                 string userId = user == null ? null : user.Id.ToString();
-                var tokenResult = tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
-                if (tokenResult.Succeed)
+                if (userId == null)
                 {
-                    if (userId == null)
+                    var tr = await tokenService.ValidateToGetSessionData(appkey, accountId, accessToken);
+                    if (tr != null)
                     {
                         return new
                         {
                             RegistAPIServer = Startup.Server
                         };
                     }
+                    throw new Exception("Validate Failed");
+                }
+                var tokenResult = await tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
+                if (tokenResult.Succeed)
+                {
                     return new
                     {
                         AppToken = tokenResult.UserSessionData.AppToken,

@@ -20,7 +20,8 @@ namespace TorontoAPIServer.Controllers
         public async Task<object> Post(string accountId, string accessToken, string nickName, string motto)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
-            if (tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken) != null)
+            var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
+            if (userSession != null)
             {
                 var newUser = new SharelinkUser()
                 {
@@ -34,7 +35,7 @@ namespace TorontoAPIServer.Controllers
                 var user = await userService.CreateNewUser(newUser);
                 var newUserId = user.Id.ToString();
                 await userService.CreateNewLinkWithOtherUser(newUserId, newUserId, new SharelinkUserLink.State() { LinkState = (int)SharelinkUserLink.LinkState.Linked },nickName);
-                var sessionData = tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, newUser.Id.ToString());
+                var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, newUser.Id.ToString());
                 return new
                 {
                     Succeed = true,
