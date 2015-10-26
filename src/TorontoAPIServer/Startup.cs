@@ -13,6 +13,7 @@ using ServerControlService.Model;
 using ServiceStack.Redis;
 using System.Net;
 using BahamutFireService.Service;
+using Microsoft.Framework.Logging;
 
 namespace TorontoAPIServer
 {
@@ -34,10 +35,14 @@ namespace TorontoAPIServer
         public static RedisManagerPool MessagePubSubServerClientManager { get; private set; }
         public static RedisManagerPool MessageCacheServerClientManager { get; private set; }
 
+        public static IHostingEnvironment HostingEnvironment { get; private set; }
+        public static IApplicationEnvironment AppEnvironment { get; private set; }
+
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
             // Setup configuration sources.
-
+            HostingEnvironment = env;
+            AppEnvironment = appEnv;
             var builder = new ConfigurationBuilder()
                 .SetBasePath(appEnv.ApplicationBasePath)
                 .AddJsonFile("config.json")
@@ -53,6 +58,10 @@ namespace TorontoAPIServer
                 Url = Configuration["Data:SharelinkDBServer:url"]
             };
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
+            BahamutDBConnectionString = env.IsDevelopment() ?
+                string.Format(BahamutDBConnectionString, "root", "dfyybest") :
+                string.Format(BahamutDBConnectionString, "root", "sharelinkbest");
+
             ChicagoServerAddress = Configuration["Data:ChicagoServer:host"];
             ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
         }
@@ -77,7 +86,7 @@ namespace TorontoAPIServer
         }
 
         // Configure is called after ConfigureServices is called.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             ServicesProvider = app.ApplicationServices;
 
@@ -85,7 +94,8 @@ namespace TorontoAPIServer
             var appInstance = new BahamutAppInstance()
             {
                 Appkey = Appkey,
-                InstanceServiceUrl = Configuration["server.urls"]
+                InstanceServiceUrl = Configuration["Data:App:url"],
+                Region = Configuration["Data:App:region"]
             };
             try
             {
@@ -96,7 +106,8 @@ namespace TorontoAPIServer
             {
                 Console.WriteLine("Can't connect to app center to regist");
             }
-
+            loggerFactory.MinimumLevel = LogLevel.Information;
+            loggerFactory.AddConsole();
             app.UseMiddleware<BasicAuthentication>(Appkey);
             // Configure the HTTP request pipeline.
             app.UseStaticFiles();

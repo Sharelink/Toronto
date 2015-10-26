@@ -7,6 +7,13 @@
       "environmentVariables": {
         "ASPNET_ENV": "Development"
       }
+    },
+    "web": {
+      "commandName": "web",
+      "commandLineArgs": "--server.urls http://api.sharelink.online:8088",
+      "environmentVariables": {
+        "ASPNET_ENV": "Development"
+      }
     }
   }
 }

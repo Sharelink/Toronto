@@ -8,6 +8,7 @@
     "Microsoft.AspNet.Server.Kestrel": "1.0.0-*",
     "Microsoft.AspNet.StaticFiles": "1.0.0-*",
     "Microsoft.Framework.Configuration.Json": "1.0.0-*",
+    "Microsoft.Framework.Logging.Console": "1.0.0-*",
     "ServerControlService": "1.0.0-*",
     "TorontoService": "1.0.0-*"
   },
