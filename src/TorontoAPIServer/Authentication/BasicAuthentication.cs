@@ -30,7 +30,7 @@ namespace TorontoAPIServer.Authentication
         public Task Invoke(HttpContext httpContext)
         {
             Console.WriteLine(httpContext.Request.Path);
-            if (httpContext.Request.Path == "/Tokens" || httpContext.Request.Path == "/NewSharelinkUsers")
+            if (httpContext.Request.Path == "/Tokens" || httpContext.Request.Path == "/NewSharelinkers")
             {
                 return _next(httpContext);
             }

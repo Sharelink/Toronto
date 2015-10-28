@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace TorontoModel.MongodbModel
 {
-    public class SharelinkUser
+    public class Sharelinker
     {
-        public SharelinkUser()
+        public Sharelinker()
         {
             LinkedUsers = new ObjectId[0];
             SharelinkTags = new ObjectId[0];
@@ -114,10 +114,12 @@ namespace TorontoModel.MongodbModel
         public ObjectId UserId { set; get; }
         public string TagName { get; set; }
         public string TagColor { get; set; }
+        public string TagDomain { get; set; }
+        public string TagType { get; set; }
         public string Data { get; set; }
         public bool IsFocus { get; set; }
         public bool ShowToLinkers { get; set; }
-        public DateTime LastActiveTime { get; set; }
+        public DateTime CreateTime { get; set; }
     }
 
     public class Vote
@@ -126,7 +128,7 @@ namespace TorontoModel.MongodbModel
         public DateTime VoteTime { get; set; }
     }
 
-    public class SharelinkUserLink
+    public class SharelinkerLink
     {
         public enum LinkState
         {

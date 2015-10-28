@@ -12,7 +12,7 @@ namespace TorontoService
 {
     public class ShareService
     {
-        IMongoClient Client = new MongoClient();
+        public IMongoClient Client { get; private set; }
 
         public ShareService(IMongoClient client)
         {
@@ -60,7 +60,7 @@ namespace TorontoService
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
             var share = await shareThingCollection.Find(s => s.Id == sId).FirstAsync();
             var uOId = new ObjectId(userId);
-            var userCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var userCollection = Client.GetDatabase("Sharelink").GetCollection<Sharelinker>("Sharelinker");
             var me = await userCollection.Find(u => u.Id == uOId).FirstAsync();
 
             //TODO:Cache this

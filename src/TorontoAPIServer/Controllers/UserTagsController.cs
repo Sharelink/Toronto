@@ -21,14 +21,16 @@ namespace TorontoAPIServer.Controllers
             var service = this.UseSharelinkTagService().GetSharelinkTagService();
             var taskResult = await service.GetUserFocusTags(linkedUserId);
             var tags = from t in taskResult
-                       where t.IsFocus
+                       where t.ShowToLinkers
                        select new
                        {
                            tagId = t.Id.ToString(),
                            tagName = t.TagName,
                            tagColor = t.TagColor,
                            data = t.Data,
-                           isFocus = t.IsFocus
+                           isFocus = t.IsFocus,
+                           type = t.TagType,
+                           domain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM
                        };
             return new
             {

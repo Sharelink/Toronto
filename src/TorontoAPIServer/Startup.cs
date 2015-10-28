@@ -5,13 +5,11 @@ using Microsoft.Framework.DependencyInjection;
 using TorontoAPIServer.Authentication;
 using Microsoft.Framework.Configuration;
 using BahamutService;
-using DataLevelDefines;
 using BahamutCommon;
 using Microsoft.Dnx.Runtime;
 using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
-using System.Net;
 using BahamutFireService.Service;
 using Microsoft.Framework.Logging;
 
@@ -26,9 +24,8 @@ namespace TorontoAPIServer
         public static string Server { get; set; }
         public static string APIUrl { get; private set; }
         public static string FileApiUrl { get; private set; }
-        public static IMongoDbServerConfig SharelinkDBConfig { get; private set; }
+        public static string SharelinkDBUrl { get; private set; }
         public static string BahamutDBConnectionString { get; private set; }
-        public static IRedisServerConfig ControlRedisServerConfig { get; private set; }
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
         public static string ChicagoServerAddress { get; private set; }
         public static int ChicagoServerPort { get; private set; }
@@ -53,10 +50,7 @@ namespace TorontoAPIServer
             Appname = Configuration["Data:App:appname"];
             Server = Configuration["Data:App:url"];
             APIUrl = Server + "/api";
-            SharelinkDBConfig = new MongoDbServerConfig()
-            {
-                Url = Configuration["Data:SharelinkDBServer:url"]
-            };
+            SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
             BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
             BahamutDBConnectionString = env.IsDevelopment() ?
                 string.Format(BahamutDBConnectionString, "root", "dfyybest") :

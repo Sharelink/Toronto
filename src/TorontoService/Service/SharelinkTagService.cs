@@ -10,6 +10,135 @@ using TorontoModel.MongodbModel;
 
 namespace TorontoService
 {
+
+    public class SharelinkTagConstant
+    {
+        #region tag domain
+        public const string TAG_DOMAIN_CUSTOM = "custom:";
+        public const string TAG_DOMAIN_SYSTEM = "system:";
+        #endregion
+
+        #region tag types
+        public const string TAG_TYPE_KEYWORD = "keyword:";
+        public const string TAG_TYPE_GEO = "geo:";
+        public const string TAG_TYPE_SHARELINKER = "sharelinker:";
+        #endregion
+
+        #region system tag types
+        public const string TAG_TYPE_FEEDBACK = "feedback:";
+        public const string TAG_TYPE_BROADCAST = "broadcast:";
+        public const string TAG_TYPE_PRIVATE = "private:";
+        #endregion
+
+        public static IEnumerable<SharelinkTag> SystemTags = SharelinkTagUtil.InitSystemTags();
+    }
+
+    public static class SharelinkTagUtil
+    {
+        
+        public static IEnumerable<SharelinkTag> InitSystemTags()
+        {
+            var tags = new List<SharelinkTag>();
+            tags.Add(new SharelinkTag()
+            {
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
+                TagType = SharelinkTagConstant.TAG_TYPE_FEEDBACK
+            });
+
+            tags.Add(new SharelinkTag()
+            {
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
+                TagType = SharelinkTagConstant.TAG_TYPE_GEO
+            });
+
+            tags.Add(new SharelinkTag()
+            {
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
+                TagType = SharelinkTagConstant.TAG_TYPE_BROADCAST
+            });
+
+            tags.Add(new SharelinkTag()
+            {
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
+                TagType = SharelinkTagConstant.TAG_TYPE_PRIVATE
+            });
+
+            foreach (var tag in tags)
+            {
+                tag.Id = new ObjectId(tag.TagDomain + tag.TagType);
+                tag.IsFocus = true;
+                tag.TagColor = "#438ccb";
+            }
+            return tags;
+        }
+
+        public static SharelinkTag GeneratePersonTag(string tagDomain, string userId)
+        {
+            var tag = new SharelinkTag()
+            {
+                Data = userId,
+                TagDomain = tagDomain,
+                TagType = SharelinkTagConstant.TAG_TYPE_SHARELINKER,
+                TagColor = "#438ccb",
+                IsFocus = true,
+                Id = new ObjectId(userId),
+                UserId = new ObjectId(userId),
+                ShowToLinkers = true
+            };
+            return tag;
+        }
+
+        public static SharelinkTag GenerateKeyworkTag(string keyword)
+        {
+            return new SharelinkTag()
+            {
+                Data = keyword,
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
+                TagType = SharelinkTagConstant.TAG_TYPE_KEYWORD
+            };
+        }
+
+        public static bool IsTagMatch(this SharelinkTag tag1,SharelinkTag tag2)
+        {
+            return tag1.Data == tag2.Data;
+        }
+
+        public static bool IsSystemTag(this SharelinkTag tag)
+        {
+            return SharelinkTagConstant.TAG_DOMAIN_SYSTEM == tag.TagDomain;
+        }
+
+        public static bool IsCustomTag(this SharelinkTag tag)
+        {
+            return SharelinkTagConstant.TAG_DOMAIN_CUSTOM == tag.TagDomain;
+        }
+
+        public static bool TagIsTypeOf(this SharelinkTag tag,string tagType)
+        {
+            return tagType == tag.TagType;
+        }
+
+        public static bool IsSharelinkerTag(this SharelinkTag tag)
+        {
+            return TagIsTypeOf(tag, SharelinkTagConstant.TAG_TYPE_SHARELINKER);
+        }
+
+        public static bool IsBroadcastTag(this SharelinkTag tag)
+        {
+            return TagIsTypeOf(tag, SharelinkTagConstant.TAG_TYPE_BROADCAST);
+        }
+
+        public static bool IsPrivateTag(this SharelinkTag tag)
+        {
+            return TagIsTypeOf(tag, SharelinkTagConstant.TAG_TYPE_PRIVATE);
+        }
+
+        public static bool IsFeedbackTag(this SharelinkTag tag)
+        {
+            return TagIsTypeOf(tag, SharelinkTagConstant.TAG_TYPE_FEEDBACK);
+        }
+    }
+
     public class SharelinkTagService
     {
         public IMongoClient Client { get; set; }
@@ -25,7 +154,11 @@ namespace TorontoService
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
 
             //Cache this data
-            return await collectionTag.Find(t => t.UserId == userOId).ToListAsync();
+            var tags = await collectionTag.Find(t => t.UserId == userOId).ToListAsync();
+            tags.Add(SharelinkTagUtil.GeneratePersonTag(SharelinkTagConstant.TAG_DOMAIN_SYSTEM, userId));
+            tags.AddRange(SharelinkTagConstant.SystemTags);
+
+            return tags;
         }
 
         public async Task<IDictionary<ObjectId, IEnumerable<SharelinkTag>>> GetLinkersTags(IEnumerable<ObjectId> linkerIds)
@@ -52,53 +185,36 @@ namespace TorontoService
             return await collectionTag.Find(t => t.UserId == userOId && t.IsFocus).ToListAsync();
         }
 
-        public IEnumerable<Tuple<string, string>> MatchTags(IEnumerable<string> tagCollection1, IEnumerable<string> tagColleciton2)
+        public IEnumerable<string> MatchTags(IEnumerable<SharelinkTag> shareTagCollection, IEnumerable<SharelinkTag> userTagColleciton)
         {
-            var result = new List<Tuple<string, string>>();
+            var result = new List<string>();
 
-            foreach (var tag1 in tagCollection1)
+            foreach (var tag1 in shareTagCollection)
             {
-                foreach (var tag2 in tagColleciton2)
+                foreach (var tag2 in userTagColleciton)
                 {
-                    if (isTagMatch(tag1, tag2))
+                    if (tag1.IsTagMatch(tag2))
                     {
-                        var t = Tuple.Create(tag1, tag2);
-                        result.Add(t);
+                        result.Add(tag2.TagName);
                     }
                 }
             }
-
             return result;
         }
 
-        private bool isTagMatch(string tag1, string tag2)
+        public async Task<SharelinkTag> CreateNewSharelinkTag(SharelinkTag newTag)
         {
-            return tag1 == tag2;
-        }
-
-        public async Task<SharelinkTag> CreateNewSharelinkTag(string userId,string tagName, string tagColor, string data,string isFocus)
-        {
-            var uId = new ObjectId(userId);
-            var newTag = new SharelinkTag()
-            {
-                TagColor = tagColor,
-                TagName = tagName,
-                Data = data,
-                IsFocus = isFocus == null ? false : bool.Parse(isFocus),
-                UserId = uId,
-                LastActiveTime = DateTime.UtcNow
-            };
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var collection = Client.GetDatabase("Sharelink").GetCollection<Sharelinker>("Sharelinker");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             await collectionTag.InsertOneAsync(newTag);
-            var res = await collection.UpdateOneAsync(u => u.Id == uId, 
-                new UpdateDefinitionBuilder<SharelinkUser>().Push(su => su.SharelinkTags, newTag.Id));
+            var res = await collection.UpdateOneAsync(u => u.Id == newTag.UserId, 
+                new UpdateDefinitionBuilder<Sharelinker>().Push(su => su.SharelinkTags, newTag.Id));
             return newTag;
         }
 
         public async Task<bool> UpdateSharelinkTag(string userId, string tagId ,string newTagName,string newColor,string data,string isFocus)
         {
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
+            var collection = Client.GetDatabase("Sharelink").GetCollection<Sharelinker>("Sharelinker");
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             var me = await collection.Find(u => u.Id == new ObjectId(userId)).FirstAsync();
             var tagOId = new ObjectId(tagId);
@@ -129,12 +245,6 @@ namespace TorontoService
                 
             }
 
-            if (isFocus != null || !string.IsNullOrWhiteSpace(newTagName))
-            {
-                var u = update.Set(tt => tt.LastActiveTime, DateTime.UtcNow);
-                uList.Add(u);
-            }
-
             if (me.SharelinkTags.Contains(tagOId))
             {
                 var result = await collectionTag.UpdateOneAsync(t => t.Id == tagOId, update.Combine(uList));
@@ -148,11 +258,15 @@ namespace TorontoService
 
         public async Task<bool> DeleteSharelinkTags(string userId, string[] tagIds)
         {
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkUser>("SharelinkUser");
-            var collectionLink = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
+            ObjectId userOId = new ObjectId(userId);
+            var collection = Client.GetDatabase("Sharelink").GetCollection<Sharelinker>("Sharelinker");
+            var collectionTags = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             var ids = from id in tagIds select new ObjectId(id);
-            var update = new UpdateDefinitionBuilder<SharelinkUser>().PullAll(u => u.SharelinkTags, ids);  
-            var res = await collection.UpdateOneAsync(u => u.Id == new ObjectId(userId),update);
+            var filter = new FilterDefinitionBuilder<SharelinkTag>().In(t => t.Id, ids);
+            var tags = await collectionTags.Find(filter).ToListAsync();
+            var removeIds = from t in tags where SharelinkTagUtil.IsCustomTag(t) select t.Id;
+            var update = new UpdateDefinitionBuilder<Sharelinker>().PullAll(u => u.SharelinkTags, removeIds);  
+            var res = await collection.UpdateOneAsync(u => u.Id == userOId ,update);
             return res.ModifiedCount > 0;
         }
 

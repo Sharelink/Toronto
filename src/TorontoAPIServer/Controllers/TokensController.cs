@@ -19,7 +19,7 @@ namespace TorontoAPIServer.Controllers
         public async Task<object> Get(string appkey, string accountId, string accessToken)
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
-            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var userService = this.UseSharelinkerService().GetSharelinkerService();
             try
             {
                 var user = await userService.GetUserOfAccountId(accountId);

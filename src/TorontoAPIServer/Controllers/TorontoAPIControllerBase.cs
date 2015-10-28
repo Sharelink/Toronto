@@ -46,7 +46,7 @@ namespace TorontoAPIServer.Controllers
 
     public class TorontoServiceProviderUseMongoDb:TorontoServiceProvider
     {
-        IMongoClient Client = new MongoClient(MongoUrl.Create(Startup.SharelinkDBConfig.Url));
+        IMongoClient Client = new MongoClient(MongoUrl.Create(Startup.SharelinkDBUrl));
         public override object GetService(Type type)
         {
             return GetService(type, Client);

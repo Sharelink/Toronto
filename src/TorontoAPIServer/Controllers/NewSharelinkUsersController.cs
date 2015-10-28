@@ -13,7 +13,7 @@ using System.Net;
 namespace TorontoAPIServer.Controllers
 {
     [Route("[controller]")]
-    public class NewSharelinkUsersController : TorontoAPIController
+    public class NewSharelinkersController : TorontoAPIController
     {
         // POST api/values
         [HttpPost]
@@ -23,7 +23,7 @@ namespace TorontoAPIServer.Controllers
             var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
             if (userSession != null)
             {
-                var newUser = new SharelinkUser()
+                var newUser = new Sharelinker()
                 {
                     AccountId = accountId,
                     NickName = nickName,
@@ -31,10 +31,10 @@ namespace TorontoAPIServer.Controllers
                     NoteName = nickName,
                     Motto = motto
                 };
-                var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+                var userService = this.UseSharelinkerService().GetSharelinkerService();
                 var user = await userService.CreateNewUser(newUser);
                 var newUserId = user.Id.ToString();
-                await userService.CreateNewLinkWithOtherUser(newUserId, newUserId, new SharelinkUserLink.State() { LinkState = (int)SharelinkUserLink.LinkState.Linked },nickName);
+                await userService.CreateNewLinkWithOtherUser(newUserId, newUserId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked },nickName);
                 var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, newUser.Id.ToString());
                 return new
                 {

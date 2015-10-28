@@ -76,5 +76,19 @@ namespace TorontoAPIServer.Controllers
             });
         }
 
+        [HttpPut("Password")]
+        public async Task<bool> ChangePassword(string oldPassword, string newPassword)
+        {
+            return await Task.Run(() =>
+            {
+                var accountService = Startup.ServicesProvider.GetAccountService();
+                var suc = accountService.ChangePassword(UserSessionData.AccountId, oldPassword, newPassword);
+                if (suc == false)
+                {
+                    Response.StatusCode = (int)HttpStatusCode.NotModified;
+                }
+                return suc;
+            });
+        }
     }
 }

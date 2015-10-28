@@ -20,7 +20,7 @@ namespace TorontoAPIServer.Controllers
         public async Task<object[]> Get()
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var shareService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var shareService = this.UseSharelinkerService().GetSharelinkerService();
             try
             {
                 var tags = await sharelinkTagService.GetUserSharelinkTags(UserSessionData.UserId);
@@ -45,14 +45,44 @@ namespace TorontoAPIServer.Controllers
 
         // POST /SharelinkTags (tagName,tagColor,data,isFocus):add a new user tag to my tags collection
         [HttpPost]
-        public async Task<object> Post(string tagName, string tagColor, string data, string isFocus)
+        public async Task<object> Post(string tagName, string tagColor,string type, string data, string isFocus,string isShowToLinkers)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var shareService = this.UseShareService().GetShareService();
-            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var userService = this.UseSharelinkerService().GetSharelinkerService();
             var userId = new ObjectId(UserSessionData.UserId);
-            var r = await sharelinkTagService.CreateNewSharelinkTag(UserSessionData.UserId, tagName, tagColor, data, isFocus);
-            if (bool.Parse(isFocus))
+
+            var newTag = new SharelinkTag()
+            {
+                TagColor = tagColor,
+                TagName = tagName,
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
+                TagType = type,
+                Data = data,
+                IsFocus = string.IsNullOrWhiteSpace(isFocus) ? false : bool.Parse(isFocus),
+                UserId = userId,
+                CreateTime = DateTime.UtcNow,
+                ShowToLinkers = string.IsNullOrWhiteSpace(isShowToLinkers) ? false : bool.Parse(isShowToLinkers)
+            };
+
+            var r = await sharelinkTagService.CreateNewSharelinkTag(newTag);
+            await SendFocusTagMessage(isFocus, shareService, userService, userId, newTag, r);
+            var res = new
+            {
+                tagId = r.Id.ToString(),
+                tagName = r.TagName,
+                tagColor = r.TagColor,
+                data = r.Data,
+                isFocus = r.IsFocus.ToString().ToLower(),
+                type = r.TagType,
+                domain = r.TagDomain
+            };
+            return res;
+        }
+
+        private async Task SendFocusTagMessage(string isFocus, ShareService shareService, SharelinkerService userService, ObjectId userId, SharelinkTag newTag, SharelinkTag r)
+        {
+            if (bool.Parse(isFocus) && newTag.IsSharelinkerTag() == false)
             {
                 var newShare = new ShareThing()
                 {
@@ -79,15 +109,6 @@ namespace TorontoAPIServer.Controllers
                 }
                 shareService.InsertMails(newMails);
             }
-            var res = new
-            {
-                tagId = r.Id.ToString(),
-                tagName = r.TagName,
-                tagColor = r.TagColor,
-                data = r.Data,
-                isFocus = r.IsFocus.ToString().ToLower()
-            };
-            return res;
         }
 
         // PUT /SharelinkTags/{tagId}: update tag property

@@ -21,14 +21,14 @@ namespace TorontoAPIServer.Controllers
         [HttpGet]
         public async Task<object[]> Get()
         {
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
+            var service = this.UseSharelinkerService().GetSharelinkerService();
             var taskRes = await service.GetUserlinksOfUserId(UserSessionData.UserId);
             var links = from ul in taskRes
                         select new
                         {
                             linkId = ul.SlaveUserObjectId.ToString(),
                             slaveUserId = ul.SlaveUserObjectId.ToString(),
-                            status = SharelinkUserLink.State.FromJson(ul.StateDocument).LinkState.ToString(),
+                            status = SharelinkerLink.State.FromJson(ul.StateDocument).LinkState.ToString(),
                             createTime = DateTimeUtil.ToString(ul.CreateTime)
                         };
             return links.ToArray();
@@ -38,7 +38,7 @@ namespace TorontoAPIServer.Controllers
         [HttpPut("NoteName")]
         public async void PutUpdateNoteName(string userId, string newNoteName)
         {
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
+            var service = this.UseSharelinkerService().GetSharelinkerService();
             var suc = await service.UpdateLinkedUserNoteName(UserSessionData.UserId, userId, newNoteName);
             if (!suc)
             {
@@ -50,8 +50,8 @@ namespace TorontoAPIServer.Controllers
         [HttpPut]
         public async void Put(string userId, string newState)
         {
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            var ns = new SharelinkUserLink.State() { LinkState = int.Parse(newState) };
+            var service = this.UseSharelinkerService().GetSharelinkerService();
+            var ns = new SharelinkerLink.State() { LinkState = int.Parse(newState) };
             var suc = await service.UpdateUserlinkStateWithUser(UserSessionData.UserId, userId, JsonConvert.SerializeObject(ns));
             if (!suc)
             {
@@ -62,9 +62,9 @@ namespace TorontoAPIServer.Controllers
         [HttpPost("{sharelinkerId}")]
         public async Task<object> AcceptAskingLink(string sharelinkerId,string noteName)
         {
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
-            var newlink = await service.CreateNewLinkWithOtherUser(UserSessionData.UserId, sharelinkerId, new SharelinkUserLink.State() { LinkState = (int)SharelinkUserLink.LinkState.Linked },noteName);
-            await service.CreateNewLinkWithOtherUser(sharelinkerId, UserSessionData.UserId, new SharelinkUserLink.State() { LinkState = (int)SharelinkUserLink.LinkState.Linked });
+            var service = this.UseSharelinkerService().GetSharelinkerService();
+            var newlink = await service.CreateNewLinkWithOtherUser(UserSessionData.UserId, sharelinkerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked },noteName);
+            await service.CreateNewLinkWithOtherUser(sharelinkerId, UserSessionData.UserId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked });
             var me = await service.GetUserOfUserId(UserSessionData.UserId);
             using (var messageCache = Startup.MessageCacheServerClientManager.GetClient())
             {
@@ -91,7 +91,7 @@ namespace TorontoAPIServer.Controllers
                 linkId = sharelinkerId,
                 masterUserId = UserSessionData.UserId,
                 slaveUserId = sharelinkerId,
-                status = SharelinkUserLink.State.FromJson(newlink.StateDocument).LinkState.ToString(),
+                status = SharelinkerLink.State.FromJson(newlink.StateDocument).LinkState.ToString(),
                 createTime = DateTimeUtil.ToString(newlink.CreateTime)
             };
             var newUser = new
@@ -153,7 +153,7 @@ namespace TorontoAPIServer.Controllers
         [HttpPost]
         public async Task<bool> Post(string otherUserId,string msg)
         {
-            var service = this.UseSharelinkUserService().GetSharelinkUserService();
+            var service = this.UseSharelinkerService().GetSharelinkerService();
 
             var user = await service.GetUserOfUserId(UserSessionData.UserId);
             using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())

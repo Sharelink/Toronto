@@ -50,7 +50,7 @@ namespace TorontoAPIServer.Controllers
         private async Task<object[]> shareThingsToResults(IEnumerable<ShareThing> shares)
         {
             var fireAccessService = Startup.ServicesProvider.GetFireAccesskeyService();
-            var usrService = this.UseSharelinkUserService().GetSharelinkUserService();
+            var usrService = this.UseSharelinkerService().GetSharelinkerService();
             var users = await usrService.GetUserLinkedUsers(UserSessionData.UserId);
             var result = new List<object>();
             foreach (var share in shares)
@@ -111,11 +111,23 @@ namespace TorontoAPIServer.Controllers
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pShareId"></param>
+        /// <param name="title"></param>
+        /// <param name="shareType"></param>
+        /// <param name="tags">sample: base64("{type:"tagType",data:"tagData"}")#base64("{type:"tagType",data:"tagData"}")... </param>
+        /// <param name="shareContent"></param>
+        /// <returns></returns>
         // POST /ShareThings (pShareId, title, shareType,tags, shareContent) : post a new share,if pshareid equals 0, means not a reshare action
         [HttpPost]
         public async Task<object> Post(string pShareId, string title, string shareType, string tags, string shareContent)
         {
             var service = this.UseShareService().GetShareService();
+            var b64 = new DBTek.Crypto.Base64();
+            var tagb64s = tags.Split('#');
+            var tagJsons = from tagB64 in tagb64s select b64.DecodeString(tagB64);
             var newShare = new ShareThing()
             {
                 ShareTime = DateTime.UtcNow,
@@ -123,7 +135,7 @@ namespace TorontoAPIServer.Controllers
                 UserId = new ObjectId(UserSessionData.UserId),
                 ShareType = shareType,
                 ShareContent = shareContent,
-                Tags = tags.Split('#')
+                Tags = tagJsons.ToArray()
             };
 
             if (pShareId != null)
@@ -145,44 +157,36 @@ namespace TorontoAPIServer.Controllers
             var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var service = this.UseShareService().GetShareService();
             var newShare = (await service.GetShares(new ObjectId[] { new ObjectId(shareId) })).First();
-            var userService = this.UseSharelinkUserService().GetSharelinkUserService();
-            var linkers = await userService.GetUserlinksOfUserId(UserSessionData.UserId);
-            var linkerIds = from l in linkers select l.SlaveUserObjectId;
-            var linkersTags = await tagService.GetLinkersTags(linkerIds);
+
             var mails = new List<ShareThingMail>();
-            foreach (var linkerTags in linkersTags)
+            IEnumerable<dynamic> dynamicTags = from tagJson in newShare.Tags select Newtonsoft.Json.JsonConvert.DeserializeObject(tagJson);
+            var newShareTags = from dt in dynamicTags
+                               select new SharelinkTag()
+                               {
+                                   Data = dt.data,
+                                   TagType = dt.type
+                               };
+            var isPrivateShare = newShareTags.Count(st => st.IsPrivateTag()) > 0;
+            mails.Add(new ShareThingMail()
             {
-                var linkTagDatas = from lt in linkerTags.Value select lt.Data;
+                ShareId = newShare.Id,
+                Time = DateTime.UtcNow,
+                ToSharelinker = new ObjectId(UserSessionData.UserId)
+            });
 
-                if (linkerTags.Key == newShare.UserId)
-                {
-                    var mail = new ShareThingMail()
-                    {
-                        ShareId = newShare.Id,
-                        Time = DateTime.UtcNow,
-                        ToSharelinker = linkerTags.Key
-                    };
-                    mail.Tags = new string[] { };
-                    mails.Add(mail);
-                }
-                else
-                {
-                    var matchTags = tagService.MatchTags(newShare.Tags, linkTagDatas).Select(t => t.Item2);
-                    if (matchTags.Count() > 0)
-                    {
-                        var mail = new ShareThingMail()
-                        {
-                            ShareId = newShare.Id,
-                            Time = DateTime.UtcNow,
-                            ToSharelinker = linkerTags.Key
-                        };
-                        mail.Tags = matchTags;
-                        mails.Add(mail);
-                    }
-                }
+            if (isPrivateShare == false)
+            {
+                await MatchLinkerTags(tagService, newShare, mails, newShareTags);
             }
-
             service.InsertMails(mails);
+
+            PublishShareMessages(shareId, mails);
+
+            return new { message = "ok" };
+        }
+
+        private static void PublishShareMessages(string shareId, List<ShareThingMail> mails)
+        {
             using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
             {
                 using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
@@ -201,8 +205,41 @@ namespace TorontoAPIServer.Controllers
 
                 }
             }
-            
-            return new { message = "ok" };
+        }
+
+        private async Task MatchLinkerTags(SharelinkTagService tagService, ShareThing newShare, List<ShareThingMail> mails, IEnumerable<SharelinkTag> newShareTags)
+        {
+            var userService = this.UseSharelinkerService().GetSharelinkerService();
+            var linkers = await userService.GetUserlinksOfUserId(UserSessionData.UserId);
+            var linkerIds = from l in linkers select l.SlaveUserObjectId;
+            var linkersTags = await tagService.GetLinkersTags(linkerIds);
+            foreach (var linkerTags in linkersTags)
+            {
+                var sendMailFlag = false;
+                var mail = new ShareThingMail()
+                {
+                    ShareId = newShare.Id,
+                    Time = DateTime.UtcNow
+                };
+                if (linkerTags.Key == newShare.UserId)
+                {
+                    sendMailFlag = false;
+                }
+                else
+                {
+                    var linkTagDatas = from lt in linkerTags.Value select lt;
+                    var matchTags = tagService.MatchTags(newShareTags, linkTagDatas);
+                    if (matchTags.Count() > 0)
+                    {
+                        mail.Tags = matchTags;
+                        sendMailFlag = true;
+                    }
+                }
+                if (sendMailFlag)
+                {
+                    mails.Add(mail);
+                }
+            }
         }
     }
 }
