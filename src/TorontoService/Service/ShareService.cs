@@ -36,9 +36,6 @@ namespace TorontoService
         {
             var shareThingMailCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingMail>("ShareThingMail");
             var uOId = new ObjectId(userId);
-            var shareUserService = new SharelinkUserService(Client);
-            var shareTagService = new SharelinkTagService(Client);
-            var filterBuilder = new FilterDefinitionBuilder<ShareThingMail>();
             var shareMails = await shareThingMailCollection.FindAsync(m =>m.ToSharelinker == uOId && m.Time >= beginTime && m.Time < endTime);
             var mails = await shareMails.ToListAsync();
             if (page == -1)
