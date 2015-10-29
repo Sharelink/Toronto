@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using TorontoService;
 using BahamutService;
+using BahamutCommon;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -30,7 +31,8 @@ namespace TorontoAPIServer.Controllers
                            data = t.Data,
                            isFocus = t.IsFocus,
                            type = t.TagType,
-                           domain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM
+                           domain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
+                           time = DateTimeUtil.ToAccurateDateTimeString(t.CreateTime)
                        };
             return new
             {

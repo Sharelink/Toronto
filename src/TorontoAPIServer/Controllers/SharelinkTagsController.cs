@@ -27,11 +27,13 @@ namespace TorontoAPIServer.Controllers
                 var result = from t in tags
                              select new
                              {
-                                 tagId = t.Id.ToString(),
+                                 tagId = t.IsSystemTag() ? PasswordHash.Encrypt.MD5(string.Format("{0}{1}{2}", t.TagDomain, t.TagType, t.Data)) : t.Id.ToString(),
                                  tagName = t.TagName,
                                  tagColor = t.TagColor,
                                  data = t.Data,
-                                 isFocus = t.IsFocus
+                                 isFocus = t.IsFocus,
+                                 domain = t.TagDomain,
+                                 type = t.TagType
                              };
                 return result.ToArray();
             }
@@ -82,7 +84,7 @@ namespace TorontoAPIServer.Controllers
 
         private async Task SendFocusTagMessage(string isFocus, ShareService shareService, SharelinkerService userService, ObjectId userId, SharelinkTag newTag, SharelinkTag r)
         {
-            if (bool.Parse(isFocus) && newTag.IsSharelinkerTag() == false)
+            if (bool.Parse(isFocus) && newTag.IsSharelinkerTag() == false && newTag.ShowToLinkers)
             {
                 var newShare = new ShareThing()
                 {
@@ -113,7 +115,7 @@ namespace TorontoAPIServer.Controllers
 
         // PUT /SharelinkTags/{tagId}: update tag property
         [HttpPut("{tagId}")]
-        public async void PutTag(string tagId, string tagName, string tagColor, string data, string isFocus)
+        public async void PutTag(string tagId, string tagName, string tagColor, string data, string isFocus,string type,string isShowToLinkers)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var isSuc = await sharelinkTagService.UpdateSharelinkTag(UserSessionData.UserId, tagId, tagName, tagColor, data, isFocus);

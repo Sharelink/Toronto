@@ -160,13 +160,18 @@ namespace TorontoAPIServer.Controllers
 
             var mails = new List<ShareThingMail>();
             IEnumerable<dynamic> dynamicTags = from tagJson in newShare.Tags select Newtonsoft.Json.JsonConvert.DeserializeObject(tagJson);
-            var newShareTags = from dt in dynamicTags
+            var newShareTags = (from dt in dynamicTags
                                select new SharelinkTag()
                                {
                                    Data = dt.data,
                                    TagType = dt.type
-                               };
+                               }).ToList();
             var isPrivateShare = newShareTags.Count(st => st.IsPrivateTag()) > 0;
+            newShareTags.Add(new SharelinkTag()
+            {
+                Data = UserSessionData.UserId,
+                TagType = SharelinkTagConstant.TAG_TYPE_SHARELINKER
+            });
             mails.Add(new ShareThingMail()
             {
                 ShareId = newShare.Id,

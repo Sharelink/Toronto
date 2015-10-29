@@ -39,33 +39,41 @@ namespace TorontoService
         public static IEnumerable<SharelinkTag> InitSystemTags()
         {
             var tags = new List<SharelinkTag>();
+
             tags.Add(new SharelinkTag()
             {
                 TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
-                TagType = SharelinkTagConstant.TAG_TYPE_FEEDBACK
+                TagType = SharelinkTagConstant.TAG_TYPE_PRIVATE,
+                Data = "private",
+                TagName = "Private"
             });
 
             tags.Add(new SharelinkTag()
             {
                 TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
-                TagType = SharelinkTagConstant.TAG_TYPE_GEO
+                TagType = SharelinkTagConstant.TAG_TYPE_GEO,
+                Data = "here",
+                TagName = "Here"
             });
 
             tags.Add(new SharelinkTag()
             {
                 TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
-                TagType = SharelinkTagConstant.TAG_TYPE_BROADCAST
+                TagType = SharelinkTagConstant.TAG_TYPE_FEEDBACK,
+                TagName = "Feedback",
+                Data = "feedback"
             });
 
             tags.Add(new SharelinkTag()
             {
                 TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
-                TagType = SharelinkTagConstant.TAG_TYPE_PRIVATE
+                TagType = SharelinkTagConstant.TAG_TYPE_BROADCAST,
+                TagName = "Broadcast",
+                Data = "Broadcast"
             });
 
             foreach (var tag in tags)
             {
-                tag.Id = new ObjectId(tag.TagDomain + tag.TagType);
                 tag.IsFocus = true;
                 tag.TagColor = "#438ccb";
             }
@@ -83,7 +91,8 @@ namespace TorontoService
                 IsFocus = true,
                 Id = new ObjectId(userId),
                 UserId = new ObjectId(userId),
-                ShowToLinkers = true
+                ShowToLinkers = true,
+                TagName = "Me"
             };
             return tag;
         }
@@ -156,7 +165,10 @@ namespace TorontoService
             //Cache this data
             var tags = await collectionTag.Find(t => t.UserId == userOId).ToListAsync();
             tags.Add(SharelinkTagUtil.GeneratePersonTag(SharelinkTagConstant.TAG_DOMAIN_SYSTEM, userId));
-            tags.AddRange(SharelinkTagConstant.SystemTags);
+            foreach (var tag in SharelinkTagConstant.SystemTags)
+            {
+                tags.Add(tag);
+            }
 
             return tags;
         }
