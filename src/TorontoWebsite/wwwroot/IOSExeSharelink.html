@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Sharelink</title>
+</head>
+<body>
+    <!-- a标签的链接，设置为对应的下载链接；点击打开的动作，在click事件中注册 -->
+    <a href="https://itunes.apple.com/cn/app/id477927812" id="openApp" style="display: none">Sharelink In App Store</a>
+    <script type="text/javascript">
+
+        //获取url中的参数
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+            var r = window.location.search.substr(1).match(reg);  //匹配目标参数
+            if (r != null) return unescape(r[2]); return null; //返回参数值
+        }
+
+        document.getElementById('openApp').onclick = function (e) {
+            // 通过iframe的方式试图打开APP，如果能正常打开，会直接切换到APP，并自动阻止a标签的默认行为
+            // 否则打开a标签的href链接
+            var ifr = document.createElement('iframe');
+            ifr.src = 'sharelink://'+ getUrlParam('cmd');
+            ifr.style.display = 'none';
+            document.body.appendChild(ifr);
+            window.setTimeout(function () {
+                document.body.removeChild(ifr);
+            }, 3000)
+        };
+        document.getElementById('openApp').click();
+    </script>
+
+</body>
+</html>
