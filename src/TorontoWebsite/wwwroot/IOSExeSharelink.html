@@ -3,14 +3,18 @@
 <head>
     <meta charset="utf-8" />
     <title>Sharelink</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/common.js"></script>
 </head>
 <body text-align="center" style="background-color:white">
-    <!-- a标签的链接，设置为对应的下载链接；点击打开的动作，在click事件中注册 -->
+
     <div class="login-container">
         <button id="openApp" style="font-size:larger" onclick="javascript: redirectAppStore();">Sharelink In App Store</button>
+        <p class="connect p" style="color:crimson">微信和QQ用户请通过右上角按钮使用Safari打开~</p>
     </div>
+    
     <script type="text/javascript">
         var appStoreUrl = 'https://itunes.apple.com/cn/app/id477927812'
 
@@ -32,8 +36,8 @@
 
         window.setTimeout(function () {
             document.body.removeChild(ifr);
+            redirectAppStore();
         }, 3000);
-        redirectAppStore();
     </script>
 </body>
 </html>
