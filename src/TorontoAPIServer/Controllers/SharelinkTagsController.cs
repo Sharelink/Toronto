@@ -7,6 +7,7 @@ using TorontoService;
 using TorontoModel.MongodbModel;
 using System.Net;
 using MongoDB.Bson;
+using BahamutCommon;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -31,9 +32,10 @@ namespace TorontoAPIServer.Controllers
                                  tagName = t.TagName,
                                  tagColor = t.TagColor,
                                  data = t.Data,
-                                 isFocus = t.IsFocus,
+                                 isFocus = t.IsFocus.ToString().ToLower(),
                                  domain = t.TagDomain,
-                                 type = t.TagType
+                                 type = t.TagType,
+                                 showToLinkers = t.ShowToLinkers.ToString().ToLower()
                              };
                 return result.ToArray();
             }
@@ -76,8 +78,9 @@ namespace TorontoAPIServer.Controllers
                 tagColor = r.TagColor,
                 data = r.Data,
                 isFocus = r.IsFocus.ToString().ToLower(),
+                domain = r.TagDomain,
                 type = r.TagType,
-                domain = r.TagDomain
+                showToLinkers = r.ShowToLinkers.ToString().ToLower()
             };
             return res;
         }

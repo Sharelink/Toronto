@@ -29,16 +29,13 @@ namespace TorontoAPIServer.Controllers
                            tagName = t.TagName,
                            tagColor = t.TagColor,
                            data = t.Data,
-                           isFocus = t.IsFocus,
+                           isFocus = t.IsFocus.ToString().ToLower(),
                            type = t.TagType,
                            domain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
-                           time = DateTimeUtil.ToAccurateDateTimeString(t.CreateTime)
+                           time = DateTimeUtil.ToAccurateDateTimeString(t.CreateTime),
+                           showToLinkers = t.ShowToLinkers.ToString().ToLower()
                        };
-            return new
-            {
-                userId = linkedUserId,
-                tags = tags
-            };
+            return tags;
         }
 
     }
