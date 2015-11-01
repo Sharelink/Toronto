@@ -28,6 +28,7 @@ namespace TorontoService
         public const string TAG_TYPE_FEEDBACK = "feedback:";
         public const string TAG_TYPE_BROADCAST = "broadcast:";
         public const string TAG_TYPE_PRIVATE = "private:";
+        public const string TAG_TYPE_RESHARELESS = "reshareless:";
         #endregion
 
         public static IEnumerable<SharelinkTag> SystemTags = SharelinkTagUtil.InitSystemTags();
@@ -46,6 +47,14 @@ namespace TorontoService
                 TagType = SharelinkTagConstant.TAG_TYPE_PRIVATE,
                 Data = "private",
                 TagName = "Private"
+            });
+
+            tags.Add(new SharelinkTag()
+            {
+                TagDomain = SharelinkTagConstant.TAG_DOMAIN_SYSTEM,
+                TagType = SharelinkTagConstant.TAG_TYPE_RESHARELESS,
+                Data = "reshareless",
+                TagName = "Reshareless"
             });
 
             tags.Add(new SharelinkTag()

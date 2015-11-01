@@ -45,8 +45,8 @@ namespace TorontoAPIServer.Controllers
             {
                 using (var msc = Startup.MessageCacheServerClientManager.GetClient())
                 {
-                    var list = msc.As<SharelinkMessage>().Lists[UserSessionData.UserId];
-                    msc.As<SharelinkMessage>().RemoveAllFromList(list);
+                    var list = msc.As<ChatMessage>().Lists[UserSessionData.UserId];
+                    msc.As<ChatMessage>().RemoveAllFromList(list);
                 }
             });
         }
@@ -58,8 +58,8 @@ namespace TorontoAPIServer.Controllers
             {
                 using (var msc = Startup.MessageCacheServerClientManager.GetClient())
                 {
-                    var list = msc.As<SharelinkMessage>().Lists[UserSessionData.UserId];
-                    var msgList = msc.As<SharelinkMessage>().GetAllItemsFromList(list);
+                    var list = msc.As<ChatMessage>().Lists[UserSessionData.UserId];
+                    var msgList = msc.As<ChatMessage>().GetAllItemsFromList(list);
                     var messages = from m in msgList
                                    select new
                                    {
@@ -72,7 +72,7 @@ namespace TorontoAPIServer.Controllers
                                        time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
                                        msgType = m.MessageType
                                    };
-                    msc.As<SharelinkMessage>().RemoveAllFromList(list);
+                    msc.As<ChatMessage>().RemoveAllFromList(list);
                     return messages.ToArray();
                 }
             });
@@ -84,7 +84,7 @@ namespace TorontoAPIServer.Controllers
         {
             var messageService = this.UseMessageService().GetMessageService();
 
-            var msg = new SharelinkMessage()
+            var msg = new ChatMessage()
             {
                 Message = message,
                 MessageData = messageData,
@@ -106,7 +106,7 @@ namespace TorontoAPIServer.Controllers
                         if (user != sendUserOId)
                         {
                             var idstr = user.ToString();
-                            msc.As<SharelinkMessage>().Lists[idstr].Add(msg);
+                            msc.As<ChatMessage>().Lists[idstr].Add(msg);
                             psClient.PublishMessage(idstr, "ChatMessage:" + chatId);
                         }
                     }

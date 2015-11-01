@@ -14,11 +14,11 @@ namespace TorontoService
     {
         public IMongoClient Client { get; set; }
 
-        public IMongoCollection<SharelinkMessage> MessageCollection
+        public IMongoCollection<ChatMessage> MessageCollection
         {
             get
             {
-                return Client.GetDatabase("SharelinkMessage").GetCollection<SharelinkMessage>("SharelinkMessage");
+                return Client.GetDatabase("ChatMessage").GetCollection<ChatMessage>("ChatMessage");
             }
         }
 
@@ -26,7 +26,7 @@ namespace TorontoService
         {
             get
             {
-                return Client.GetDatabase("SharelinkMessage").GetCollection<ShareChat>("ShareChat");
+                return Client.GetDatabase("ChatMessage").GetCollection<ShareChat>("ShareChat");
             }
         }
 
@@ -59,7 +59,7 @@ namespace TorontoService
         }
 
 
-        public async Task<IList<SharelinkMessage>> GetMessage(string userId,string chatId,string newerThanTime,bool includeOwnMessage = false)
+        public async Task<IList<ChatMessage>> GetMessage(string userId,string chatId,string newerThanTime,bool includeOwnMessage = false)
         {
             var collection = MessageCollection;
             DateTime date = DateTime.Parse(newerThanTime);
@@ -77,7 +77,7 @@ namespace TorontoService
             
         }
 
-        public async Task<SharelinkMessage> NewMessage(SharelinkMessage msg)
+        public async Task<ChatMessage> NewMessage(ChatMessage msg)
         {
             var collection = MessageCollection;
             await collection.InsertOneAsync(msg);

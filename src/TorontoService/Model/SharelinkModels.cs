@@ -96,7 +96,7 @@ namespace TorontoModel.MongodbModel
         public DateTime Time { get; set; }
     }
 
-    public class SharelinkMessage
+    public class ChatMessage
     {
         public ObjectId Id { get; set; }
         public ObjectId SenderId { get; set; }
