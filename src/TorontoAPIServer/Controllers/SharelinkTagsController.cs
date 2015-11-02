@@ -26,17 +26,9 @@ namespace TorontoAPIServer.Controllers
             {
                 var tags = await sharelinkTagService.GetUserSharelinkTags(UserSessionData.UserId);
                 var result = from t in tags
-                             select new
-                             {
-                                 tagId = t.IsSystemTag() ? PasswordHash.Encrypt.MD5(string.Format("{0}{1}{2}", t.TagDomain, t.TagType, t.Data)) : t.Id.ToString(),
-                                 tagName = t.TagName,
-                                 tagColor = t.TagColor,
-                                 data = t.Data,
-                                 isFocus = t.IsFocus.ToString().ToLower(),
-                                 domain = t.TagDomain,
-                                 type = t.TagType,
-                                 showToLinkers = t.ShowToLinkers.ToString().ToLower()
-                             };
+                             select SharelinkTagToResultObject(
+                                 t.IsSystemTag() ? PasswordHash.Encrypt.MD5(string.Format("{0}{1}{2}", t.TagDomain, t.TagType, t.Data)) : t.Id.ToString(),
+                                 t);
                 return result.ToArray();
             }
             catch (Exception)
@@ -77,18 +69,23 @@ namespace TorontoAPIServer.Controllers
             {
                 await SendShowToLinkerTagMessage(shareService, userService, userId, r);
             }
-            var res = new
+            return SharelinkTagToResultObject(r.Id.ToString(),r);
+        }
+
+        private static object SharelinkTagToResultObject(string tagId,SharelinkTag r)
+        {
+            return new
             {
-                tagId = r.Id.ToString(),
+                tagId = tagId,
                 tagName = r.TagName,
                 tagColor = r.TagColor,
                 data = r.Data,
                 isFocus = r.IsFocus.ToString().ToLower(),
                 domain = r.TagDomain,
                 type = r.TagType,
-                showToLinkers = r.ShowToLinkers.ToString().ToLower()
+                showToLinkers = r.ShowToLinkers.ToString().ToLower(),
+                time = DateTimeUtil.ToAccurateDateTimeString(r.CreateTime)
             };
-            return res;
         }
 
         private async Task SendShowToLinkerTagMessage(ShareService shareService, SharelinkerService userService, ObjectId userId, SharelinkTag newTag)
@@ -98,7 +95,7 @@ namespace TorontoAPIServer.Controllers
                 ShareTime = DateTime.UtcNow,
                 ShareType = newTag.IsFocus ? ShareThingConstants.SHARE_TYPE_MESSAGE_FOCUS_TAG : ShareThingConstants.SHARE_TYPE_MESSAGE_ADD_TAG,
                 UserId = userId,
-                ShareContent = newTag.TagName
+                ShareContent = SharelinkTagToResultObject(newTag.Id.ToString(),newTag).ToJson()
             };
             await shareService.PostNewShareThing(newShare);
 

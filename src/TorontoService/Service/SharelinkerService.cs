@@ -29,8 +29,9 @@ namespace TorontoService
         {
             var userOIdA = new ObjectId(userIdA);
             var userOIdB = new ObjectId(userIdB);
-            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkerLink>("SharelinkerLink");
-            return await collection.Find(ll => ll.SlaveUserObjectId == userOIdA && ll.MasterUserObjectId == userOIdB).CountAsync() > 0;
+            var userLinks = await GetUserlinksOfUserId(userIdB);
+            var links = from ul in userLinks where ul.SlaveUserObjectId == userOIdA select ul;
+            return links.Count() > 0;
         }
 
         public async Task<IList<Sharelinker>> GetLinkedUsersOfUserId(string userId, IEnumerable<string> ids = null, bool useNoteName = true)

@@ -9,6 +9,8 @@ using BahamutService;
 using TorontoModel.MongodbModel;
 using MongoDB.Bson;
 using System.Net;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -58,19 +60,31 @@ namespace TorontoAPIServer.Controllers
             {
                 var uId = share.UserId.ToString();
                 var user = users[uId];
+                var userAvatar = "";
+                var shareContent = share.ShareContent;
+
+                if (share.IsFilmType())
+                {
+                    dynamic content = JsonConvert.DeserializeObject(share.ShareContent);
+                    string file = content.film;
+                    string accessKey = fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, file);
+                    content.film = accessKey;
+                    shareContent = content.ToJson();
+                }
                 result.Add(new
                 {
                     shareId = share.Id.ToString(),
                     pShareId = share.PShareId.ToString(),
                     userId = uId,
                     userNick = user.NoteName,
-                    avatarId = fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, user.Avatar),
+                    avatarId = userAvatar,
                     shareTime = DateTimeUtil.ToString(share.ShareTime),
                     shareType = share.ShareType,
-                    title = share.Title,
-                    shareContent = share.IsFilmType() ? fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, share.ShareContent) : share.ShareContent,
+                    message = share.Message,
+                    shareContent = shareContent ,
                     voteUsers = (from v in share.Votes select v.UserId.ToString()).ToArray(),
-                    forTags = share.Tags
+                    forTags = share.Tags,
+                    reshareable = share.Reshareable.ToString().ToLower()
                 });
             }
             return result.ToArray();
@@ -112,40 +126,69 @@ namespace TorontoAPIServer.Controllers
             }
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="pShareId"></param>
-        /// <param name="title"></param>
-        /// <param name="shareType"></param>
-        /// <param name="tags">sample: base64("{type:"tagType",data:"tagData"}")#base64("{type:"tagType",data:"tagData"}")... </param>
-        /// <param name="shareContent"></param>
-        /// <returns></returns>
-        // POST /ShareThings (pShareId, title, shareType,tags, shareContent) : post a new share,if pshareid equals 0, means not a reshare action
-        [HttpPost]
-        public async Task<object> Post(string pShareId, string title, string shareType, string tags, string shareContent)
+        [HttpPost("Reshare/{pShareId}")]
+        public async Task<object> Reshare(string pShareId, string message, string tags)
         {
+            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var service = this.UseShareService().GetShareService();
+            var pShare = (await service.GetShares(new ObjectId[] { new ObjectId(pShareId) })).First();
+            if (pShare.Reshareable == false)
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { };
+            }
             var b64 = new DBTek.Crypto.Base64();
             var tagb64s = tags.Split('#');
             var tagJsons = from tagB64 in tagb64s select b64.DecodeString(tagB64);
             var newShare = new ShareThing()
             {
+                Message = message,
+                PShareId = pShare.Id,
+                Reshareable = true,
+                ShareContent = pShare.ShareContent,
                 ShareTime = DateTime.UtcNow,
-                Title = title,
+                ShareType = pShare.ShareType,
+                Tags = tagJsons.ToArray(),
+                UserId = new ObjectId(UserSessionData.UserId)
+            };
+            newShare = await service.PostNewShareThing(newShare);
+            await FinishedPostShare(newShare.Id.ToString(), "true");
+            return new { shareId = newShare.Id.ToString() };
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="shareType"></param>
+        /// <param name="tags">sample: base64("{type:"tagType",data:"tagData"}")#base64("{type:"tagType",data:"tagData"}")... </param>
+        /// <param name="shareContent">json string</param>
+        /// <param name="reshareable">can reshare</param>
+        /// <returns></returns>
+        // POST /ShareThings (pShareId, message, shareType,tags, shareContent) : post a new share,if pshareid equals 0, means not a reshare action
+        [HttpPost]
+        public async Task<object> Post(string message, string shareType, string tags, string shareContent, string reshareable)
+        {
+            var service = this.UseShareService().GetShareService();
+            var b64 = new DBTek.Crypto.Base64();
+            var tagb64s = tags.Split('#');
+            var tagJsons = from tagB64 in tagb64s select b64.DecodeString(tagB64);
+            var reshare = true;
+            try { reshare = bool.Parse(reshareable); } catch { };
+            var newShare = new ShareThing()
+            {
+                ShareTime = DateTime.UtcNow,
+                Message = message,
                 UserId = new ObjectId(UserSessionData.UserId),
                 ShareType = shareType,
                 ShareContent = shareContent,
-                Tags = tagJsons.ToArray()
+                Tags = tagJsons.ToArray(),
+                Reshareable = reshare
             };
             if (newShare.IsUserShareType() == false)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return new { };
-            }
-            if (pShareId != null)
-            {
-                newShare.PShareId = new ObjectId(pShareId);
             }
             newShare = await service.PostNewShareThing(newShare);
             return new { shareId = newShare.Id.ToString() };
@@ -159,12 +202,13 @@ namespace TorontoAPIServer.Controllers
             {
                 return new { message = "ok" };
             }
+            
             var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var service = this.UseShareService().GetShareService();
             var newShare = (await service.GetShares(new ObjectId[] { new ObjectId(shareId) })).First();
 
             var mails = new List<ShareThingMail>();
-            IEnumerable<dynamic> dynamicTags = from tagJson in newShare.Tags select Newtonsoft.Json.JsonConvert.DeserializeObject(tagJson);
+            IEnumerable<dynamic> dynamicTags = from tagJson in newShare.Tags select JsonConvert.DeserializeObject(tagJson);
             var newShareTags = (from dt in dynamicTags
                                select new SharelinkTag()
                                {

@@ -22,7 +22,8 @@ namespace TorontoAPIServer.Controllers
         {
             var service = this.UseSharelinkTagService().GetSharelinkTagService();
             var userService = this.UseSharelinkerService().GetSharelinkerService();
-            if(await userService.IsUsersLinked(UserSessionData.UserId,linkedUserId))
+            var isLinkedUser = await userService.IsUsersLinked(UserSessionData.UserId, linkedUserId);
+            if (isLinkedUser)
             {
                 var taskResult = await service.GetSharelinkerOpenTags(linkedUserId);
                 var tags = from t in taskResult

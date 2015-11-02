@@ -78,11 +78,12 @@ namespace TorontoModel.MongodbModel
         public ObjectId UserId { get; set; }
         public ObjectId PShareId { get; set; }
         public DateTime ShareTime { get; set; }
-        public string Title { get; set; }
+        public string Message{ get; set; }
         public string ShareContent { get; set; }
         public string ShareType { get; set; }
         public Vote[] Votes { get; set; }
         public string[] Tags { get; set; }
+        public bool Reshareable { get; set; }
     }
 
     public class ShareThingUpdatedMessage
@@ -98,6 +99,7 @@ namespace TorontoModel.MongodbModel
         public ObjectId ToSharelinker { get; set; }
         public IEnumerable<string> Tags { get; set; }
         public DateTime Time { get; set; }
+        public string ExtraData { get; set; }
     }
 
     public class LinkMessage

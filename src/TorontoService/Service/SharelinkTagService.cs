@@ -202,15 +202,16 @@ namespace TorontoService
             return result;
         }
 
-        public async Task<IList<SharelinkTag>> GetSharelinkerOpenTags(string userId)
+        public async Task<IEnumerable<SharelinkTag>> GetSharelinkerOpenTags(string userId)
         {
             var userOId = new ObjectId(userId);
             var collectionTag = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
 
             //Cache this data
-            var openTags = await collectionTag.Find(t => t.UserId == userOId && t.IsCustomTag() && t.ShowToLinkers && !t.IsSharelinkerTag()).ToListAsync();
+            var allTags = await collectionTag.Find(t => t.UserId == userOId).ToListAsync();
+            var openTags = (from t in allTags where t.IsCustomTag() && t.ShowToLinkers && !t.IsSharelinkerTag() select t).ToList();
             var userPersonalTag = SharelinkTagUtil.GeneratePersonTag(SharelinkTagConstant.TAG_DOMAIN_CUSTOM, userId);
-            openTags.Add(userPersonalTag);
+            openTags.Insert(0, userPersonalTag);
             return openTags;
         }
 
