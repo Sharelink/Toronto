@@ -55,7 +55,10 @@ namespace TorontoAPIServer.Controllers
             var shareService = this.UseShareService().GetShareService();
             var userService = this.UseSharelinkerService().GetSharelinkerService();
             var userId = new ObjectId(UserSessionData.UserId);
-
+            bool focus = false;
+            bool showToLinker = false;
+            try { focus = bool.Parse(isFocus); } catch (Exception) { }
+            try { showToLinker = bool.Parse(isShowToLinkers); } catch (Exception) { }
             var newTag = new SharelinkTag()
             {
                 TagColor = tagColor,
@@ -63,14 +66,17 @@ namespace TorontoAPIServer.Controllers
                 TagDomain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
                 TagType = type,
                 Data = data,
-                IsFocus = string.IsNullOrWhiteSpace(isFocus) ? false : bool.Parse(isFocus),
+                IsFocus = focus,
                 UserId = userId,
                 CreateTime = DateTime.UtcNow,
-                ShowToLinkers = string.IsNullOrWhiteSpace(isShowToLinkers) ? false : bool.Parse(isShowToLinkers)
+                ShowToLinkers = showToLinker
             };
 
             var r = await sharelinkTagService.CreateNewSharelinkTag(newTag);
-            await SendFocusTagMessage(isFocus, shareService, userService, userId, newTag, r);
+            if (showToLinker && newTag.IsSharelinkerTag() == false)
+            {
+                await SendShowToLinkerTagMessage(shareService, userService, userId, r);
+            }
             var res = new
             {
                 tagId = r.Id.ToString(),
@@ -85,43 +91,44 @@ namespace TorontoAPIServer.Controllers
             return res;
         }
 
-        private async Task SendFocusTagMessage(string isFocus, ShareService shareService, SharelinkerService userService, ObjectId userId, SharelinkTag newTag, SharelinkTag r)
+        private async Task SendShowToLinkerTagMessage(ShareService shareService, SharelinkerService userService, ObjectId userId, SharelinkTag newTag)
         {
-            if (bool.Parse(isFocus) && newTag.IsSharelinkerTag() == false && newTag.ShowToLinkers)
+            var newShare = new ShareThing()
             {
-                var newShare = new ShareThing()
+                ShareTime = DateTime.UtcNow,
+                ShareType = newTag.IsFocus ? ShareThingConstants.SHARE_TYPE_MESSAGE_FOCUS_TAG : ShareThingConstants.SHARE_TYPE_MESSAGE_ADD_TAG,
+                UserId = userId,
+                ShareContent = newTag.TagName
+            };
+            await shareService.PostNewShareThing(newShare);
+
+            var linkers = await userService.GetUserlinksOfUserId(UserSessionData.UserId);
+            var linkerIds = from l in linkers select l.SlaveUserObjectId;
+
+            var newMails = new List<ShareThingMail>();
+            foreach (var linker in linkerIds)
+            {
+                var newMail = new ShareThingMail()
                 {
-                    ShareTime = DateTime.UtcNow,
-                    ShareType = "message",
-                    UserId = userId,
-                    ShareContent = r.TagName
+                    ShareId = newShare.Id,
+                    Time = DateTime.UtcNow,
+                    ToSharelinker = linker
                 };
-                await shareService.PostNewShareThing(newShare);
-
-                var linkers = await userService.GetUserlinksOfUserId(UserSessionData.UserId);
-                var linkerIds = from l in linkers select l.SlaveUserObjectId;
-
-                var newMails = new List<ShareThingMail>();
-                foreach (var linker in linkerIds)
-                {
-                    var newMail = new ShareThingMail()
-                    {
-                        ShareId = newShare.Id,
-                        Time = DateTime.UtcNow,
-                        ToSharelinker = linker
-                    };
-                    newMails.Add(newMail);
-                }
-                shareService.InsertMails(newMails);
+                newMails.Add(newMail);
             }
+            shareService.InsertMails(newMails);
         }
 
         // PUT /SharelinkTags/{tagId}: update tag property
         [HttpPut("{tagId}")]
-        public async void PutTag(string tagId, string tagName, string tagColor, string data, string isFocus,string type,string isShowToLinkers)
+        public async void PutTag(string tagId, string tagName, string tagColor, string type, string data, string isFocus,string isShowToLinkers)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var isSuc = await sharelinkTagService.UpdateSharelinkTag(UserSessionData.UserId, tagId, tagName, tagColor, data, isFocus);
+            bool focus = false;
+            bool showToLinker = false;
+            try {focus = bool.Parse(isFocus);}catch (Exception){}
+            try { showToLinker = bool.Parse(isShowToLinkers); } catch (Exception) { }
+            var isSuc = await sharelinkTagService.UpdateSharelinkTag(UserSessionData.UserId, tagId, tagName, tagColor, data, focus, type, showToLinker);
             if (!isSuc)
             {
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;

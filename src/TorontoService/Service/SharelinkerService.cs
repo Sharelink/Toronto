@@ -25,6 +25,14 @@ namespace TorontoService
             return newUser;
         }
 
+        public async Task<bool> IsUsersLinked(string userIdA,string userIdB)
+        {
+            var userOIdA = new ObjectId(userIdA);
+            var userOIdB = new ObjectId(userIdB);
+            var collection = Client.GetDatabase("Sharelink").GetCollection<SharelinkerLink>("SharelinkerLink");
+            return await collection.Find(ll => ll.SlaveUserObjectId == userOIdA && ll.MasterUserObjectId == userOIdB).CountAsync() > 0;
+        }
+
         public async Task<IList<Sharelinker>> GetLinkedUsersOfUserId(string userId, IEnumerable<string> ids = null, bool useNoteName = true)
         {
             var links = await GetUserlinksOfUserId(userId);
@@ -130,7 +138,14 @@ namespace TorontoService
 
             var result = await collection.UpdateOneAsync(u => u.MasterUserObjectId == mUOId && u.SlaveUserObjectId == oUId
             , update.Set(u => u.SlaveUserNoteName, noteName));
-            return result.ModifiedCount > 0;
+            try
+            {
+                return result.ModifiedCount > 0;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public async Task<bool> UpdateUserlinkStateWithUser(string masterUserId, string otherUserId, string state)
@@ -142,7 +157,14 @@ namespace TorontoService
 
             var result = await collection.UpdateOneAsync(u => u.MasterUserObjectId == mUOId && u.SlaveUserObjectId == oUId
             , update.Set(u => u.StateDocument, state));
-            return result.ModifiedCount > 0;
+            try
+            {
+                return result.ModifiedCount > 0;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public async Task<bool> UpdateUserProfileNickName(string userId,string newNick)

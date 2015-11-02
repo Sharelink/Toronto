@@ -8,6 +8,7 @@ using BahamutCommon;
 using BahamutService;
 using TorontoModel.MongodbModel;
 using MongoDB.Bson;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -67,7 +68,7 @@ namespace TorontoAPIServer.Controllers
                     shareTime = DateTimeUtil.ToString(share.ShareTime),
                     shareType = share.ShareType,
                     title = share.Title,
-                    shareContent = share.ShareType == "film" ? fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, share.ShareContent) : share.ShareContent,
+                    shareContent = share.IsFilmType() ? fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, share.ShareContent) : share.ShareContent,
                     voteUsers = (from v in share.Votes select v.UserId.ToString()).ToArray(),
                     forTags = share.Tags
                 });
@@ -137,7 +138,11 @@ namespace TorontoAPIServer.Controllers
                 ShareContent = shareContent,
                 Tags = tagJsons.ToArray()
             };
-
+            if (newShare.IsUserShareType() == false)
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return new { };
+            }
             if (pShareId != null)
             {
                 newShare.PShareId = new ObjectId(pShareId);

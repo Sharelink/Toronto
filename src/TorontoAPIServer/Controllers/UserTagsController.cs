@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using TorontoService;
 using BahamutService;
 using BahamutCommon;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -20,22 +21,27 @@ namespace TorontoAPIServer.Controllers
         public async Task<object> Get(string linkedUserId)
         {
             var service = this.UseSharelinkTagService().GetSharelinkTagService();
-            var taskResult = await service.GetUserFocusTags(linkedUserId);
-            var tags = from t in taskResult
-                       where t.ShowToLinkers
-                       select new
-                       {
-                           tagId = t.Id.ToString(),
-                           tagName = t.TagName,
-                           tagColor = t.TagColor,
-                           data = t.Data,
-                           isFocus = t.IsFocus.ToString().ToLower(),
-                           type = t.TagType,
-                           domain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
-                           time = DateTimeUtil.ToAccurateDateTimeString(t.CreateTime),
-                           showToLinkers = t.ShowToLinkers.ToString().ToLower()
-                       };
-            return tags;
+            var userService = this.UseSharelinkerService().GetSharelinkerService();
+            if(await userService.IsUsersLinked(UserSessionData.UserId,linkedUserId))
+            {
+                var taskResult = await service.GetSharelinkerOpenTags(linkedUserId);
+                var tags = from t in taskResult
+                           select new
+                           {
+                               tagId = t.Id.ToString(),
+                               tagName = t.TagName,
+                               tagColor = t.TagColor,
+                               data = t.Data,
+                               isFocus = t.IsFocus.ToString().ToLower(),
+                               type = t.TagType,
+                               domain = SharelinkTagConstant.TAG_DOMAIN_CUSTOM,
+                               time = DateTimeUtil.ToAccurateDateTimeString(t.CreateTime),
+                               showToLinkers = t.ShowToLinkers.ToString().ToLower()
+                           };
+                return tags;
+            }
+            Response.StatusCode = (int)HttpStatusCode.Forbidden;
+            return new { };
         }
 
     }

@@ -25,6 +25,47 @@ namespace TorontoModel.MongodbModel
         public ObjectId[] SharelinkTags { get; set; }
     }
 
+    public class ShareThingConstants
+    {
+        public const string SHARE_TYPE_FILM = "share:film";
+
+        public const string SHARE_TYPE_MESSAGE_CUSTOM = "message:custom";
+        public const string SHARE_TYPE_MESSAGE_FOCUS_TAG = "message:focus_tag";
+        public const string SHARE_TYPE_MESSAGE_ADD_TAG = "message:add_tag";
+    }
+
+    public static class ShareThingShareTypeExtension
+    {
+        public static bool IsUserShareType(this ShareThing share)
+        {
+            return string.IsNullOrWhiteSpace(share.ShareType) == false && share.ShareType.StartsWith("share:");
+        }
+        public static bool IsFilmType(this ShareThing share)
+        {
+            return ShareThingConstants.SHARE_TYPE_FILM == share.ShareType;
+        }
+
+        public static bool IsMessageType(this ShareThing share)
+        {
+            return string.IsNullOrWhiteSpace(share.ShareType) == false && share.ShareType.StartsWith("message:");
+        }
+
+        public static bool IsCustomMessageType(this ShareThing share)
+        {
+            return ShareThingConstants.SHARE_TYPE_MESSAGE_CUSTOM == share.ShareType;
+        }
+
+        public static bool IsAddTagMessageType(this ShareThing share)
+        {
+            return ShareThingConstants.SHARE_TYPE_MESSAGE_ADD_TAG == share.ShareType;
+        }
+
+        public static bool IsFocusTagMessageType(this ShareThing share)
+        {
+            return ShareThingConstants.SHARE_TYPE_MESSAGE_FOCUS_TAG == share.ShareType;
+        }
+    }
+
     public class ShareThing
     {
         public ShareThing()
