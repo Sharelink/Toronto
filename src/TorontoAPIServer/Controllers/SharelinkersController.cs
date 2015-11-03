@@ -22,7 +22,6 @@ namespace TorontoAPIServer.Controllers
             
             string[] ids = userIds != null ? userIds.Split('#') : null;
             var userService = this.UseSharelinkerService().GetSharelinkerService();
-            var fireAccessKeyService = Startup.ServicesProvider.GetFireAccesskeyService();
             var users = await userService.GetLinkedUsersOfUserId(UserSessionData.UserId, ids);
             var result = from u in users
                          select new
@@ -30,8 +29,8 @@ namespace TorontoAPIServer.Controllers
                              userId = u.Id.ToString(),
                              nickName = u.NickName,
                              noteName = u.NoteName,
-                             avatarId = fireAccessKeyService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, u.Avatar),
-                             personalVideoId = fireAccessKeyService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, u.PersonalVideo),
+                             avatarId = u.Avatar,
+                             personalVideoId = u.PersonalVideo,
                              createTime = DateTimeUtil.ToString(u.CreateTime),
                              motto = u.Motto
                          };

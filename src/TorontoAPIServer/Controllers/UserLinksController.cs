@@ -99,8 +99,8 @@ namespace TorontoAPIServer.Controllers
                 userId = u.Id.ToString(),
                 nickName = u.NickName,
                 noteName = noteName,
-                avatarId = Startup.ServicesProvider.GetFireAccesskeyService().GetAccessKeyUseDefaultConverter(UserSessionData.AccountId,u.Avatar),
-                personalVideoId = Startup.ServicesProvider.GetFireAccesskeyService().GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, u.PersonalVideo),
+                avatarId = u.Avatar,
+                personalVideoId = u.PersonalVideo,
                 createTime = DateTimeUtil.ToString(u.CreateTime),
                 motto = u.Motto
             };
@@ -141,7 +141,7 @@ namespace TorontoAPIServer.Controllers
                                sharelinkerNick = m.SharelinkerNick,
                                type = m.Type,
                                message = m.Message,
-                               avatar = Startup.ServicesProvider.GetFireAccesskeyService().GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, m.Avatar),
+                               avatar = m.Avatar,
                                time = DateTimeUtil.ToString(m.Time)
                            };
                     return results.ToArray();

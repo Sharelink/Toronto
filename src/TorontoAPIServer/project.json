@@ -3,7 +3,6 @@
   "version": "1.0.0-*",
 
   "dependencies": {
-    "BahamutFireCommon": "1.0.0-*",
     "Microsoft.AspNet.Mvc": "6.0.0-*",
     "Microsoft.AspNet.Server.Kestrel": "1.0.0-*",
     "Microsoft.AspNet.StaticFiles": "1.0.0-*",

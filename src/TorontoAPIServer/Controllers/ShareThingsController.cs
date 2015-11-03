@@ -28,7 +28,7 @@ namespace TorontoAPIServer.Controllers
         /// <param name="pageCount">result num of one page</param>
         /// <returns></returns>
         [HttpGet]
-        public async Task<object> Get(string beginTime, string endTime, int page, int pageCount)
+        public async Task<object[]> Get(string beginTime, string endTime, int page, int pageCount)
         {
             DateTime begin = new DateTime(2015, 7, 26, 7, 7, 7);
             DateTime end = DateTime.UtcNow;
@@ -52,7 +52,6 @@ namespace TorontoAPIServer.Controllers
 
         private async Task<object[]> shareThingsToResults(IEnumerable<ShareThing> shares)
         {
-            var fireAccessService = Startup.ServicesProvider.GetFireAccesskeyService();
             var usrService = this.UseSharelinkerService().GetSharelinkerService();
             var users = await usrService.GetUserLinkedUsers(UserSessionData.UserId);
             var result = new List<object>();
@@ -62,15 +61,6 @@ namespace TorontoAPIServer.Controllers
                 var user = users[uId];
                 var userAvatar = "";
                 var shareContent = share.ShareContent;
-
-                if (share.IsFilmType())
-                {
-                    dynamic content = JsonConvert.DeserializeObject(share.ShareContent);
-                    string file = content.film;
-                    string accessKey = fireAccessService.GetAccessKeyUseDefaultConverter(UserSessionData.AccountId, file);
-                    content.film = accessKey;
-                    shareContent = content.ToJson();
-                }
                 result.Add(new
                 {
                     shareId = share.Id.ToString(),
@@ -171,8 +161,14 @@ namespace TorontoAPIServer.Controllers
         {
             var service = this.UseShareService().GetShareService();
             var b64 = new DBTek.Crypto.Base64();
-            var tagb64s = tags.Split('#');
-            var tagJsons = from tagB64 in tagb64s select b64.DecodeString(tagB64);
+            var tagb64s = string.IsNullOrWhiteSpace(tags) ? new string[0] : tags.Split('#');
+            var tagJsons = (from tagB64 in tagb64s select b64.DecodeString(tagB64)).ToList();
+            var ownTag = new
+            {
+                type = SharelinkTagConstant.TAG_TYPE_SHARELINKER,
+                data = UserSessionData.UserId
+            };
+            tagJsons.Add(ownTag.ToJson());
             var reshare = true;
             try { reshare = bool.Parse(reshareable); } catch { };
             var newShare = new ShareThing()
@@ -252,11 +248,7 @@ namespace TorontoAPIServer.Controllers
                     ShareId = newShare.Id,
                     Time = DateTime.UtcNow
                 };
-                if (linkerTags.Key == newShare.UserId)
-                {
-                    sendMailFlag = false;
-                }
-                else
+                if (linkerTags.Key != newShare.UserId)
                 {
                     var linkTagDatas = from lt in linkerTags.Value select lt;
                     var matchTags = tagService.MatchTags(newShareTags, linkTagDatas);
@@ -264,6 +256,7 @@ namespace TorontoAPIServer.Controllers
                     {
                         mail.Tags = matchTags;
                         sendMailFlag = true;
+                        mail.ToSharelinker = linkerTags.Key;
                     }
                 }
                 if (sendMailFlag)

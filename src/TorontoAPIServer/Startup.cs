@@ -10,7 +10,6 @@ using Microsoft.Dnx.Runtime;
 using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
-using BahamutFireService.Service;
 using Microsoft.Framework.Logging;
 
 namespace TorontoAPIServer
@@ -77,7 +76,6 @@ namespace TorontoAPIServer
             services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
             services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
-            services.AddInstance(new FireAccesskeyService());
 
             var pbClientManager = new RedisManagerPool(Configuration["Data:MessagePubSubServer:url"]);
             var mcClientManager = new RedisManagerPool(Configuration["Data:MessageCacheServer:url"]);
@@ -123,10 +121,6 @@ namespace TorontoAPIServer
 
     public static class IGetBahamutServiceExtension
     {
-        public static FireAccesskeyService GetFireAccesskeyService(this IServiceProvider provider)
-        {
-            return provider.GetService<FireAccesskeyService>();
-        }
 
         public static BahamutAccountService GetAccountService(this IServiceProvider provider)
         {
