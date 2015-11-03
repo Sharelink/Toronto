@@ -114,6 +114,7 @@ namespace TorontoAPIServer.Controllers
                 newMails.Add(newMail);
             }
             shareService.InsertMails(newMails);
+            Startup.PublishSubscriptionManager.PublishShareMessages(newMails);
         }
 
         // PUT /SharelinkTags/{tagId}: update tag property

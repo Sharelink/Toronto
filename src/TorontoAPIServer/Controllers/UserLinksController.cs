@@ -66,13 +66,13 @@ namespace TorontoAPIServer.Controllers
             var newlink = await service.CreateNewLinkWithOtherUser(UserSessionData.UserId, sharelinkerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked },noteName);
             await service.CreateNewLinkWithOtherUser(sharelinkerId, UserSessionData.UserId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked });
             var me = await service.GetUserOfUserId(UserSessionData.UserId);
-            using (var messageCache = Startup.MessageCacheServerClientManager.GetClient())
+            using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
             {
 
                 var linkreq = new LinkMessage()
                 {
                     SharelinkerId = UserSessionData.UserId,
-                    Type = "acceptlink",
+                    Type = LinkMessageConstants.LINK_MESSAGE_TYPE_ACCEPT_LINK,
                     Avatar = me.Avatar,
                     Id = DateTime.UtcNow.Ticks.ToString(),
                     Message = "accept",
@@ -80,7 +80,7 @@ namespace TorontoAPIServer.Controllers
                     Time = DateTime.UtcNow
                 };
                 messageCache.As<LinkMessage>().Lists[sharelinkerId].Add(linkreq);
-                using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
+                using (var psClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
                     psClient.PublishMessage(sharelinkerId, "LinkMessage");
                 }
@@ -117,7 +117,7 @@ namespace TorontoAPIServer.Controllers
         {
             return await Task.Run(() =>
             {
-                using (var messageCache = Startup.MessageCacheServerClientManager.GetClient())
+                using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
                     messageCache.As<LinkMessage>().Lists[UserSessionData.UserId].RemoveAll();
                 }
@@ -130,7 +130,7 @@ namespace TorontoAPIServer.Controllers
         {
             return await Task.Run(() =>
             {
-                using (var messageCache = Startup.MessageCacheServerClientManager.GetClient())
+                using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
                     var msgs = messageCache.As<LinkMessage>().Lists[UserSessionData.UserId].GetAll().ToArray();
                     var results =  from m in msgs
@@ -156,25 +156,18 @@ namespace TorontoAPIServer.Controllers
             var service = this.UseSharelinkerService().GetSharelinkerService();
 
             var user = await service.GetUserOfUserId(UserSessionData.UserId);
-            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
-            {
-                using (var messageCache = Startup.MessageCacheServerClientManager.GetClient())
-                {
 
-                    var linkreq = new LinkMessage()
-                    {
-                        Id = DateTime.UtcNow.Ticks.ToString(),
-                        SharelinkerId = UserSessionData.UserId,
-                        SharelinkerNick = user.NickName,
-                        Type = "asklink",
-                        Message = msg,
-                        Avatar = user.Avatar,
-                        Time = DateTime.UtcNow
-                    };
-                    messageCache.As<LinkMessage>().Lists[otherUserId].Add(linkreq);
-                }
-                psClient.PublishMessage(otherUserId, "LinkMessage:" + "new");
-            }
+            var linkmsg = new LinkMessage()
+            {
+                Id = DateTime.UtcNow.Ticks.ToString(),
+                SharelinkerId = UserSessionData.UserId,
+                SharelinkerNick = user.NickName,
+                Type = LinkMessageConstants.LINK_MESSAGE_TYPE_ASKING_LINK,
+                Message = msg,
+                Avatar = user.Avatar,
+                Time = DateTime.UtcNow
+            };
+            Startup.PublishSubscriptionManager.PublishLinkMessages(otherUserId, linkmsg);
             return true;
         }
     }

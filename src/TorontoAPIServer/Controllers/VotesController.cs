@@ -22,20 +22,12 @@ namespace TorontoAPIServer.Controllers
         {
             var shareService = this.UseShareService().GetShareService();
             var share = await shareService.VoteShare(UserSessionData.UserId, shareId);
-            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
+            var updateMsg = new ShareThingUpdatedMessage()
             {
-                using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
-                {
-                    msgClient.As<ShareThingUpdatedMessage>().Lists[share.UserId.ToString()].Add(
-                        new ShareThingUpdatedMessage()
-                        {
-                            ShareId = share.Id,
-                            Time = DateTime.UtcNow
-                        });
-                }
-                psClient.PublishMessage(share.UserId.ToString(), string.Format("ShareThingMessage:{0}", shareId));
-                
-            }
+                ShareId = share.Id,
+                Time = DateTime.UtcNow
+            };
+            Startup.PublishSubscriptionManager.PublishShareUpdatedMessages(share.UserId.ToString(), updateMsg);
         }
 
         //DELETE /Votes/{shareId} : vote sharething of shareId

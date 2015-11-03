@@ -29,8 +29,8 @@ namespace TorontoAPIServer
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
         public static string ChicagoServerAddress { get; private set; }
         public static int ChicagoServerPort { get; private set; }
-        public static RedisManagerPool MessagePubSubServerClientManager { get; private set; }
-        public static RedisManagerPool MessageCacheServerClientManager { get; private set; }
+
+        public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
 
         public static IHostingEnvironment HostingEnvironment { get; private set; }
         public static IApplicationEnvironment AppEnvironment { get; private set; }
@@ -41,23 +41,29 @@ namespace TorontoAPIServer
             HostingEnvironment = env;
             AppEnvironment = appEnv;
             var builder = new ConfigurationBuilder()
-                .SetBasePath(appEnv.ApplicationBasePath)
-                .AddJsonFile("config.json")
-                .AddEnvironmentVariables();
+                .SetBasePath(appEnv.ApplicationBasePath);
+            if (env.IsDevelopment())
+            {
+                builder.AddJsonFile("config_debug.json");
+            }
+            else
+            {
+                builder.AddJsonFile("config.json");
+            }
+            builder.AddEnvironmentVariables();
             Configuration = builder.Build();
-            FileApiUrl = Configuration["Data:FileServer:url"];
-            Appkey = Configuration["Data:App:appkey"];
-            Appname = Configuration["Data:App:appname"];
-            Server = Configuration["Data:App:url"];
-            APIUrl = Server + "/api";
-            SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
-            BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
-            BahamutDBConnectionString = env.IsDevelopment() ?
-                string.Format(BahamutDBConnectionString, "root", "dfyybest") :
-                string.Format(BahamutDBConnectionString, "root", "sharelinkbest");
 
+            BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
+            FileApiUrl = Configuration["Data:FileServer:url"];
+            Server = Configuration["Data:App:url"];
             ChicagoServerAddress = Configuration["Data:ChicagoServer:host"];
             ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
+
+            Appkey = Configuration["Data:App:appkey"];
+            Appname = Configuration["Data:App:appname"];
+            APIUrl = Server + "/api";
+            SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
+            
         }
 
         // This method gets called by a runtime.
@@ -72,8 +78,10 @@ namespace TorontoAPIServer
             services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
             services.AddInstance(new FireAccesskeyService());
-            MessagePubSubServerClientManager = new RedisManagerPool(Configuration["Data:MessagePubSubServer:url"]);
-            MessageCacheServerClientManager = new RedisManagerPool(Configuration["Data:MessageCacheServer:url"]);
+
+            var pbClientManager = new RedisManagerPool(Configuration["Data:MessagePubSubServer:url"]);
+            var mcClientManager = new RedisManagerPool(Configuration["Data:MessageCacheServer:url"]);
+            PublishSubscriptionManager = new PublishSubscriptionManager(pbClientManager,mcClientManager);
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
             // services.AddWebApiConventions();

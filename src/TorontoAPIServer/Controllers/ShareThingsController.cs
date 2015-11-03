@@ -102,7 +102,7 @@ namespace TorontoAPIServer.Controllers
         [HttpGet("Updated")]
         public object[] GetNewShareThingUpdatedMessages()
         {
-            using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
+            using (var msgClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
             {
                 var msgList = msgClient.As<ShareThingUpdatedMessage>().Lists[UserSessionData.UserId];
                 var msgs = msgList.GetAll();
@@ -119,7 +119,7 @@ namespace TorontoAPIServer.Controllers
         [HttpDelete("Updated")]
         public void DeleteNewShareThingUpdatedMessages()
         {
-            using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
+            using (var msgClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
             {
                 var msgList = msgClient.As<ShareThingUpdatedMessage>().Lists[UserSessionData.UserId];
                 msgList.RemoveAll();
@@ -234,31 +234,8 @@ namespace TorontoAPIServer.Controllers
             }
             service.InsertMails(mails);
 
-            PublishShareMessages(shareId, mails);
-
+            Startup.PublishSubscriptionManager.PublishShareMessages(mails);
             return new { message = "ok" };
-        }
-
-        private static void PublishShareMessages(string shareId, List<ShareThingMail> mails)
-        {
-            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
-            {
-                using (var msgClient = Startup.MessageCacheServerClientManager.GetClient())
-                {
-                    foreach (var m in mails)
-                    {
-                        var sharelinker = m.ToSharelinker.ToString();
-                        msgClient.As<ShareThingUpdatedMessage>().Lists[sharelinker].Add(
-                        new ShareThingUpdatedMessage()
-                        {
-                            ShareId = m.ShareId,
-                            Time = DateTime.UtcNow
-                        });
-                        psClient.PublishMessage(sharelinker, string.Format("ShareThingMessage:{0}", shareId));
-                    }
-
-                }
-            }
         }
 
         private async Task MatchLinkerTags(SharelinkTagService tagService, ShareThing newShare, List<ShareThingMail> mails, IEnumerable<SharelinkTag> newShareTags)

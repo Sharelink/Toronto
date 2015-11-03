@@ -272,13 +272,15 @@ namespace TorontoService
         {
             ObjectId userOId = new ObjectId(userId);
             var collection = Client.GetDatabase("Sharelink").GetCollection<Sharelinker>("Sharelinker");
-            var collectionTags = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
             var ids = from id in tagIds select new ObjectId(id);
-            var filter = new FilterDefinitionBuilder<SharelinkTag>().In(t => t.Id, ids);
-            var tags = await collectionTags.Find(filter).ToListAsync();
-            var removeIds = from t in tags where SharelinkTagUtil.IsCustomTag(t) select t.Id;
-            var update = new UpdateDefinitionBuilder<Sharelinker>().PullAll(u => u.SharelinkTags, removeIds);  
+            var update = new UpdateDefinitionBuilder<Sharelinker>().PullAll(u => u.SharelinkTags, ids);
             var res = await collection.UpdateOneAsync(u => u.Id == userOId ,update);
+
+            var tagCollection = Client.GetDatabase("Sharelink").GetCollection<SharelinkTag>("SharelinkTag");
+            var tagFilter = new FilterDefinitionBuilder<SharelinkTag>().In(t => t.Id, ids);
+            var uId = new ObjectId();
+            var tagUpdate = new UpdateDefinitionBuilder<SharelinkTag>().Set(t => t.UserId, uId);
+            await tagCollection.UpdateManyAsync(tagFilter,tagUpdate);
             try
             {
                 return res.ModifiedCount > 0;

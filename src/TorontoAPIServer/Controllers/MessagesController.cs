@@ -43,7 +43,7 @@ namespace TorontoAPIServer.Controllers
         {
             await Task.Run(() =>
             {
-                using (var msc = Startup.MessageCacheServerClientManager.GetClient())
+                using (var msc = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
                     var list = msc.As<ChatMessage>().Lists[UserSessionData.UserId];
                     msc.As<ChatMessage>().RemoveAllFromList(list);
@@ -56,7 +56,7 @@ namespace TorontoAPIServer.Controllers
         {
             return await Task.Run(() =>
             {
-                using (var msc = Startup.MessageCacheServerClientManager.GetClient())
+                using (var msc = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
                     var list = msc.As<ChatMessage>().Lists[UserSessionData.UserId];
                     var msgList = msc.As<ChatMessage>().GetAllItemsFromList(list);
@@ -97,22 +97,7 @@ namespace TorontoAPIServer.Controllers
             var sendUserOId = new ObjectId(UserSessionData.UserId);
             var chat = await messageService.GetOrCreateChat(chatId, UserSessionData.UserId, shareId, audienceId);
             msg = await messageService.NewMessage(msg);
-            using (var psClient = Startup.MessagePubSubServerClientManager.GetClient())
-            {
-                using (var msc = Startup.MessageCacheServerClientManager.GetClient())
-                {
-                    foreach (var user in chat.UserIds)
-                    {
-                        if (user != sendUserOId)
-                        {
-                            var idstr = user.ToString();
-                            msc.As<ChatMessage>().Lists[idstr].Add(msg);
-                            psClient.PublishMessage(idstr, "ChatMessage:" + chatId);
-                        }
-                    }
-                }
-
-            }
+            Startup.PublishSubscriptionManager.PublishChatMessages(sendUserOId, chat, msg);
             return new
             {
                 msgId = msg.Id.ToString()

@@ -102,6 +102,12 @@ namespace TorontoModel.MongodbModel
         public string ExtraData { get; set; }
     }
 
+    public class LinkMessageConstants
+    {
+        public const string LINK_MESSAGE_TYPE_ASKING_LINK = "asklink";
+        public const string LINK_MESSAGE_TYPE_ACCEPT_LINK = "acceptlink";
+    }
+
     public class LinkMessage
     {
         public string Id { get; set; }
