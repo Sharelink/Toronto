@@ -165,7 +165,7 @@ namespace TorontoAPIServer.Controllers
         /// <param name="shareContent">json string</param>
         /// <param name="reshareable">can reshare</param>
         /// <returns></returns>
-        // POST /ShareThings (pShareId, message, shareType,tags, shareContent) : post a new share,if pshareid equals 0, means not a reshare action
+        // POST /ShareThings (message, shareType,tags, shareContent, string reshareable) : post a new share,if pshareid equals 0, means not a reshare action
         [HttpPost]
         public async Task<object> Post(string message, string shareType, string tags, string shareContent, string reshareable)
         {
