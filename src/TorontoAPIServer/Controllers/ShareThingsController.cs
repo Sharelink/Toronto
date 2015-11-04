@@ -117,33 +117,23 @@ namespace TorontoAPIServer.Controllers
         }
 
         [HttpPost("Reshare/{pShareId}")]
-        public async Task<object> Reshare(string pShareId, string message, string tags)
+        public async Task<object> Reshare(string pShareId, string message, string tags,string reshareable)
         {
-            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var service = this.UseShareService().GetShareService();
             var pShare = (await service.GetShares(new ObjectId[] { new ObjectId(pShareId) })).First();
-            if (pShare.Reshareable == false)
+            if (pShare == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                return new { };
+                return new { msg = "NO_P_SHARE" };
             }
-            var b64 = new DBTek.Crypto.Base64();
-            var tagb64s = tags.Split('#');
-            var tagJsons = from tagB64 in tagb64s select b64.DecodeString(tagB64);
-            var newShare = new ShareThing()
+            var newShare = (await Post(message, pShare.ShareType, tags, pShare.ShareContent, reshareable, pShareId)) as ShareThing;
+            if (newShare != null)
             {
-                Message = message,
-                PShareId = pShare.Id,
-                Reshareable = true,
-                ShareContent = pShare.ShareContent,
-                ShareTime = DateTime.UtcNow,
-                ShareType = pShare.ShareType,
-                Tags = tagJsons.ToArray(),
-                UserId = new ObjectId(UserSessionData.UserId)
-            };
-            newShare = await service.PostNewShareThing(newShare);
-            await FinishedPostShare(newShare.Id.ToString(), "true");
-            return new { shareId = newShare.Id.ToString() };
+                await FinishedPostShare(newShare.Id.ToString(), "true");
+                return new { shareId = newShare.Id.ToString() };
+            }
+            Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+            return new { };
         }
 
         /// <summary>
@@ -157,7 +147,7 @@ namespace TorontoAPIServer.Controllers
         /// <returns></returns>
         // POST /ShareThings (message, shareType,tags, shareContent, string reshareable) : post a new share,if pshareid equals 0, means not a reshare action
         [HttpPost]
-        public async Task<object> Post(string message, string shareType, string tags, string shareContent, string reshareable)
+        public async Task<object> Post(string message, string shareType, string tags, string shareContent, string reshareable,string pShareId)
         {
             var service = this.UseShareService().GetShareService();
             var b64 = new DBTek.Crypto.Base64();
@@ -165,6 +155,7 @@ namespace TorontoAPIServer.Controllers
             var tagJsons = (from tagB64 in tagb64s select b64.DecodeString(tagB64)).ToList();
             var ownTag = new
             {
+                name = "ME",
                 type = SharelinkTagConstant.TAG_TYPE_SHARELINKER,
                 data = UserSessionData.UserId
             };
@@ -179,8 +170,12 @@ namespace TorontoAPIServer.Controllers
                 ShareType = shareType,
                 ShareContent = shareContent,
                 Tags = tagJsons.ToArray(),
-                Reshareable = reshare
+                Reshareable = reshare,
             };
+            if (string.IsNullOrWhiteSpace(pShareId) == false)
+            {
+                newShare.PShareId = new ObjectId(pShareId);
+            }
             if (newShare.IsUserShareType() == false)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
