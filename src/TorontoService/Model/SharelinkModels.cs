@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace TorontoModel.MongodbModel
 {
+    public class SharelinkerConstants
+    {
+        public const string SharelinkCenterNickName = "#<SharelinkCenter>#";
+    }
     public class Sharelinker
     {
         public Sharelinker()

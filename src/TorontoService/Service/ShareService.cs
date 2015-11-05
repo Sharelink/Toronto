@@ -19,6 +19,13 @@ namespace TorontoService
             Client = client;
         }
 
+        public IEnumerable<ShareThing> GetNewSharelinkerDefaultShareThings(string region)
+        {
+            List<ShareThing> list = new List<ShareThing>();
+
+            return list;
+        }
+
         public async Task<ShareThing> PostNewShareThing(ShareThing newShareThing)
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
