@@ -120,17 +120,28 @@ namespace TorontoAPIServer.Controllers
         public async Task<object> Reshare(string pShareId, string message, string tags,string reshareable)
         {
             var service = this.UseShareService().GetShareService();
+            var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var pShare = (await service.GetShares(new ObjectId[] { new ObjectId(pShareId) })).First();
             if (pShare == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return new { msg = "NO_P_SHARE" };
             }
-            var newShare = (await Post(message, pShare.ShareType, tags, pShare.ShareContent, reshareable, pShareId)) as ShareThing;
-            if (newShare != null)
+            var share = (await PostShare(message, pShare.ShareType, tags, pShare.ShareContent, reshareable, pShareId, service)) as ShareThing;
+            if (share != null)
             {
-                await FinishedPostShare(newShare.Id.ToString(), "true");
-                return new { shareId = newShare.Id.ToString() };
+                await SetShareFinished(share, tagService, service);
+                return new
+                {
+                    shareId = share.Id.ToString(),
+                    pShareId = share.PShareId.ToString(),
+                    shareTime = DateTimeUtil.ToString(share.ShareTime),
+                    shareType = share.ShareType,
+                    message = share.Message,
+                    shareContent = share.ShareContent,
+                    forTags = share.Tags,
+                    reshareable = share.Reshareable.ToString().ToLower()
+                };
             }
             Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             return new { };
@@ -150,6 +161,22 @@ namespace TorontoAPIServer.Controllers
         public async Task<object> Post(string message, string shareType, string tags, string shareContent, string reshareable,string pShareId)
         {
             var service = this.UseShareService().GetShareService();
+            var share = await PostShare(message, shareType, tags, shareContent, reshareable, pShareId, service);
+            return new
+            {
+                shareId = share.Id.ToString(),
+                pShareId = share.PShareId.ToString(),
+                shareTime = DateTimeUtil.ToString(share.ShareTime),
+                shareType = share.ShareType,
+                message = share.Message,
+                shareContent = share.ShareContent,
+                forTags = share.Tags,
+                reshareable = share.Reshareable.ToString().ToLower()
+            };
+        }
+
+        private async Task<ShareThing> PostShare(string message, string shareType, string tags, string shareContent, string reshareable, string pShareId, ShareService service)
+        {
             var b64 = new DBTek.Crypto.Base64();
             var tagb64s = string.IsNullOrWhiteSpace(tags) ? new string[0] : tags.Split('#');
             var tagJsons = (from tagB64 in tagb64s select b64.DecodeString(tagB64)).ToList();
@@ -179,10 +206,10 @@ namespace TorontoAPIServer.Controllers
             if (newShare.IsUserShareType() == false)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
-                return new { };
+                return null;
             }
-            newShare = await service.PostNewShareThing(newShare);
-            return new { shareId = newShare.Id.ToString() };
+            var share = await service.PostNewShareThing(newShare);
+            return share;
         }
 
         // POST /ShareThings/Finished/{shareId} (taskSuccess) : if taskSuccess, post mail to linkers who focus this share's tags
@@ -193,19 +220,23 @@ namespace TorontoAPIServer.Controllers
             {
                 return new { message = "ok" };
             }
-            
+
             var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var service = this.UseShareService().GetShareService();
             var newShare = (await service.GetShares(new ObjectId[] { new ObjectId(shareId) })).First();
+            return await SetShareFinished(newShare, tagService, service);
+        }
 
+        private async Task<object> SetShareFinished(ShareThing newShare, SharelinkTagService tagService, ShareService service)
+        {
             var mails = new List<ShareThingMail>();
             IEnumerable<dynamic> dynamicTags = from tagJson in newShare.Tags select JsonConvert.DeserializeObject(tagJson);
             var newShareTags = (from dt in dynamicTags
-                               select new SharelinkTag()
-                               {
-                                   Data = dt.data,
-                                   TagType = dt.type
-                               }).ToList();
+                                select new SharelinkTag()
+                                {
+                                    Data = dt.data,
+                                    TagType = dt.type
+                                }).ToList();
             var isPrivateShare = newShareTags.Count(st => st.IsPrivateTag()) > 0;
             newShareTags.Add(new SharelinkTag()
             {
