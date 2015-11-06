@@ -19,11 +19,19 @@ namespace TorontoService
             Client = client;
         }
 
-        public IEnumerable<ShareThing> GetNewSharelinkerDefaultShareThings(string region)
+        public async Task<ShareThing> CreateNewSharelinkerDefaultShareThings(string msg,string shareContentType,string shareContent,string senderId)
         {
-            List<ShareThing> list = new List<ShareThing>();
-
-            return list;
+            var welcomeShare = new ShareThing()
+            {
+                Message = msg,
+                ShareContent = shareContent,
+                UserId = new ObjectId(senderId),
+                Reshareable = true,
+                ShareTime = DateTime.UtcNow,
+                ShareType = shareContentType,
+            };
+            welcomeShare = await PostNewShareThing(welcomeShare);
+            return welcomeShare;
         }
 
         public async Task<ShareThing> PostNewShareThing(ShareThing newShareThing)

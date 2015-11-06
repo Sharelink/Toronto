@@ -1,0 +1,19 @@
+﻿{
+  "SharelinkCenter": {
+    "cn": "563c603cf274cd0797ae83e7",
+    "us": "563c60acf274cd0797ae83e9"
+  },
+
+  "InitShareThing": {
+    "cn": {
+      "message": "欢迎来到Sharelink！",
+      "content": "",
+      "contentType": "share:film"
+    },
+    "us": {
+      "message": "Welcome To Sharelink",
+      "content": "",
+      "contentType": "share:film"
+    }
+  }
+}

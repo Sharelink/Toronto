@@ -109,19 +109,6 @@ namespace TorontoService
             return await linkedUsers.ToListAsync();
         }
 
-        public async Task<Sharelinker> GetSharelinkCenterOfRegion(string region)
-        {
-            var collection = Client.GetDatabase("Sharelink").GetCollection<Sharelinker>("Sharelinker");
-            if (region == "cn")
-            {
-                return await collection.Find(sl => sl.AccountId == "10000").FirstAsync();
-            }
-            else
-            {
-                return await collection.Find(sl => sl.AccountId == "10001").FirstAsync();
-            }
-        }
-
         public async Task<SharelinkerLink> CreateNewLinkWithOtherUser(string masterUserId, string otherUserId, SharelinkerLink.State state,string noteName = null)
         {
             var mUOId = new ObjectId(masterUserId);

@@ -17,7 +17,7 @@ namespace TorontoAPIServer.Controllers
     {
         // POST api/values
         [HttpPost]
-        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto,string region)
+        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto,string region="cn")
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
@@ -40,20 +40,25 @@ namespace TorontoAPIServer.Controllers
                 await userService.CreateNewLinkWithOtherUser(newUserId, newUserId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked },nickName);
 
                 //Add SharelinkerCenter
-                var sharelinkCenter = await userService.GetSharelinkCenterOfRegion(region);
-                await userService.CreateNewLinkWithOtherUser(newUserId, sharelinkCenter.Id.ToString(), new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked }, SharelinkerConstants.SharelinkCenterNickName);
+                var centerId = Startup.Configuration[string.Format("SharelinkCenter:{0}", region)];
+                await userService.CreateNewLinkWithOtherUser(newUserId, centerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked }, SharelinkerConstants.SharelinkCenterNickName);
 
                 //Add default share for user
-                var shareService = this.UseSharelinkerService().GetShareService();
-                var defaultShareThing = shareService.GetNewSharelinkerDefaultShareThings(region);
-                var shareMails = from st in defaultShareThing
-                                 select new ShareThingMail()
-                                 {
-                                     ShareId = st.Id,
-                                     Tags = new string[] { "Broadcast" },
-                                     Time = DateTime.UtcNow,
-                                     ToSharelinker = newUser.Id
-                                 };
+                var shareService = this.UseShareService().GetShareService();
+                var msg = Startup.Configuration[string.Format("InitShareThing:{0}:message", region)];
+                var content = Startup.Configuration[string.Format("InitShareThing:{0}:content", region)];
+                var contentType = Startup.Configuration[string.Format("InitShareThing:{0}:contentType", region)];
+                var defaultShareThing = await shareService.CreateNewSharelinkerDefaultShareThings(msg, contentType, content, centerId);
+                var shareMails = new ShareThingMail[]
+                {
+                    new ShareThingMail()
+                    {
+                        ShareId = defaultShareThing.Id,
+                        Tags = new string[] { "Broadcast" },
+                        ToSharelinker = newUser.Id,
+                        Time = DateTime.UtcNow
+                    }
+                };
                 shareService.InsertMails(shareMails);
                 #endregion
 

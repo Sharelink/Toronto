@@ -11,12 +11,14 @@ using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
 using Microsoft.Framework.Logging;
+using MongoDB.Driver;
+using TorontoModel.MongodbModel;
 
 namespace TorontoAPIServer
 {
     public class Startup
     {
-        public IConfiguration Configuration { get; set; }
+        public static IConfiguration Configuration { get; set; }
         public static IServiceProvider ServicesProvider { get; private set; }
         public static string Appkey { get; private set; }
         public static string Appname { get; private set; }
@@ -49,6 +51,8 @@ namespace TorontoAPIServer
             {
                 builder.AddJsonFile("config.json");
             }
+
+            builder.AddJsonFile("new_sharelinker_config.json");
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
 
