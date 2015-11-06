@@ -32,9 +32,20 @@ namespace TorontoAPIServer.Controllers
                              avatarId = u.Avatar,
                              personalVideoId = u.PersonalVideo,
                              createTime = DateTimeUtil.ToString(u.CreateTime),
-                             motto = u.Motto
+                             motto = u.Motto,
+                             levelScore = u.Point,
+                             level = CaculateLevel(u.Point)
                          };
             return result.ToArray();
+        }
+
+        private int CaculateLevel(int point)
+        {
+            if (point < 49)
+            {
+                return 1;
+            }
+            return point;
         }
 
         //GET /Sharelinkers/{id} : return the user of id
@@ -51,7 +62,9 @@ namespace TorontoAPIServer.Controllers
                 avatarId = u.Avatar,
                 personalVideoId = u.PersonalVideo,
                 createTime = DateTimeUtil.ToString(u.CreateTime),
-                motto = u.Motto
+                motto = u.Motto,
+                levelScore = u.Point,
+                level = CaculateLevel(u.Point)
             };
         }
 

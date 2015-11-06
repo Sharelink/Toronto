@@ -25,6 +25,7 @@ namespace TorontoModel.MongodbModel
         public string Avatar { get; set; }
         public string PersonalVideo { get; set; }
         public string Motto { get; set; }
+        public int Point { get; set; }
         public ObjectId[] LinkedUsers { get; set; }
         public ObjectId[] SharelinkTags { get; set; }
     }
