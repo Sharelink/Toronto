@@ -90,7 +90,7 @@ namespace TorontoAPIServer.Controllers
                 MessageData = messageData,
                 MessageType = type,
                 SenderId = new ObjectId(UserSessionData.UserId),
-                Time = DateTimeUtil.ToDate(time),
+                Time = DateTime.UtcNow,
                 ChatId = chatId,
                 ShareId = shareId
             };
