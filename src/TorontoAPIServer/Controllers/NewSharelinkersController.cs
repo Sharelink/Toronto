@@ -50,7 +50,7 @@ namespace TorontoAPIServer.Controllers
                                  select new ShareThingMail()
                                  {
                                      ShareId = st.Id,
-                                     Tags = new string[] { "Me" },
+                                     Tags = new string[] { "Broadcast" },
                                      Time = DateTime.UtcNow,
                                      ToSharelinker = newUser.Id
                                  };

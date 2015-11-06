@@ -121,7 +121,7 @@ namespace TorontoAPIServer.Controllers
         {
             var service = this.UseShareService().GetShareService();
             var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var pShare = (await service.GetShares(new ObjectId[] { new ObjectId(pShareId) })).First();
+            var pShare = await service.GetShare(new ObjectId(pShareId));
             if (pShare == null)
             {
                 Response.StatusCode = (int)HttpStatusCode.Forbidden;
@@ -223,7 +223,7 @@ namespace TorontoAPIServer.Controllers
 
             var tagService = this.UseSharelinkTagService().GetSharelinkTagService();
             var service = this.UseShareService().GetShareService();
-            var newShare = (await service.GetShares(new ObjectId[] { new ObjectId(shareId) })).First();
+            var newShare = await service.GetShare(new ObjectId(shareId));
             return await SetShareFinished(newShare, tagService, service);
         }
 

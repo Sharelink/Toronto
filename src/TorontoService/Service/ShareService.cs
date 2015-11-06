@@ -53,6 +53,12 @@ namespace TorontoService
             return result.Skip(page * pageCount).Take(pageCount).ToArray();
         }
 
+        public async Task<ShareThing> GetShare(ObjectId shareId)
+        {
+            var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
+            return await shareThingCollection.Find(st => st.Id == shareId).FirstAsync();
+        }
+
         public async Task<IList<ShareThing>> GetShares(IEnumerable<ObjectId> shareIds)
         {
             var shareThingCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThing>("ShareThing");
