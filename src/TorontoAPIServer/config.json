@@ -30,7 +30,7 @@
 
     "ChicagoServer": {
       "host": "chicago.sharelink.online",
-      "port": 6789
+      "port": 9657
     },
 
     "FileServer": {
