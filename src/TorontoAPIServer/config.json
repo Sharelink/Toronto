@@ -35,6 +35,10 @@
 
     "FileServer": {
       "url": "http://file.sharelink.online:8089"
+    },
+
+    "Log": {
+      "logFile": "/home/deployment/logs/TorontoAPIServer/8088.log"
     }
   }
   

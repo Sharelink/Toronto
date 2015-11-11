@@ -10,11 +10,11 @@ namespace TorontoAPIServer
 {
     public class PublishSubscriptionManager
     {
-        private RedisManagerPool mcClientManager;
-        private RedisManagerPool psClientManager { get; set; }
-        public RedisManagerPool MessageCacheClientManager { get { return mcClientManager; } }
+        private IRedisClientsManager mcClientManager;
+        private IRedisClientsManager psClientManager { get; set; }
+        public IRedisClientsManager MessageCacheClientManager { get { return mcClientManager; } }
 
-        public PublishSubscriptionManager(RedisManagerPool psClientManager, RedisManagerPool mcClientManager)
+        public PublishSubscriptionManager(IRedisClientsManager psClientManager, IRedisClientsManager mcClientManager)
         {
             this.mcClientManager = mcClientManager;
             this.psClientManager = psClientManager;

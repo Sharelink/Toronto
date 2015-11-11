@@ -13,6 +13,7 @@ using ServiceStack.Redis;
 using Microsoft.Framework.Logging;
 using MongoDB.Driver;
 using TorontoModel.MongodbModel;
+using NLog;
 
 namespace TorontoAPIServer
 {
@@ -75,14 +76,20 @@ namespace TorontoAPIServer
         {
             services.AddMvc();
 
-            var TokenServerClientManager = new RedisManagerPool(Configuration["Data:TokenServer:url"]);
-            var ControlServerServiceClientManager = new RedisManagerPool(Configuration["Data:ControlServiceServer:url"]);
+            var tokenServerUrl = Configuration["Data:TokenServer:url"].Replace("redis://", "");
+            var TokenServerClientManager = new PooledRedisClientManager(tokenServerUrl);
+
+            var serverControlUrl = Configuration["Data:ControlServiceServer:url"].Replace("redis://", "");
+            var ControlServerServiceClientManager = new PooledRedisClientManager(serverControlUrl);
             services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
             services.AddInstance(new TokenService(TokenServerClientManager));
             services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
 
-            var pbClientManager = new RedisManagerPool(Configuration["Data:MessagePubSubServer:url"]);
-            var mcClientManager = new RedisManagerPool(Configuration["Data:MessageCacheServer:url"]);
+            var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
+            var pbClientManager = new PooledRedisClientManager(pubsubServerUrl);
+
+            var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
+            var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
             PublishSubscriptionManager = new PublishSubscriptionManager(pbClientManager,mcClientManager);
             // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
             // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
@@ -90,10 +97,30 @@ namespace TorontoAPIServer
         }
 
         // Configure is called after ConfigureServices is called.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             ServicesProvider = app.ApplicationServices;
 
+            //Log
+            var logConfig = new NLog.Config.LoggingConfiguration();
+            var fileTarget = new NLog.Targets.FileTarget();
+            fileTarget.FileName = Configuration["Data:Log:logFile"];
+            fileTarget.Name = "FileLogger";
+            fileTarget.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message}";
+            logConfig.AddTarget(fileTarget);
+            logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, fileTarget));
+            LogManager.Configuration = logConfig;
+
+            if (env.IsDevelopment())
+            {
+                var consoleLogger = new NLog.Targets.ColoredConsoleTarget();
+                consoleLogger.Name = "ConsoleLogger";
+                consoleLogger.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message}";
+                logConfig.AddTarget(consoleLogger);
+                logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, consoleLogger));
+            }
+
+            //Regist App Instance
             var serverMgrService = ServicesProvider.GetServerControlManagementService();
             var appInstance = new BahamutAppInstance()
             {
@@ -106,12 +133,11 @@ namespace TorontoAPIServer
                 BahamutAppInstance = serverMgrService.RegistAppInstance(appInstance);
                 serverMgrService.StartKeepAlive(BahamutAppInstance.Id);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                Console.WriteLine("Can't connect to app center to regist");
+                LogManager.GetCurrentClassLogger().Error(ex, "Unable To Regist App Instance");
             }
-            loggerFactory.MinimumLevel = LogLevel.Information;
-            loggerFactory.AddConsole();
+
             app.UseMiddleware<BasicAuthentication>(Appkey);
             // Configure the HTTP request pipeline.
             app.UseStaticFiles();
@@ -120,6 +146,8 @@ namespace TorontoAPIServer
             app.UseMvc();
             // Add the following route for porting Web API 2 controllers.
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
+
+            LogManager.GetCurrentClassLogger().Info("Toronto Started!");
         }
     }
 

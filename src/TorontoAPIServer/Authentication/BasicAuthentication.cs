@@ -29,7 +29,7 @@ namespace TorontoAPIServer.Authentication
 
         public Task Invoke(HttpContext httpContext)
         {
-            Console.WriteLine(httpContext.Request.Path);
+            NLog.LogManager.GetCurrentClassLogger().Info("Request:{0}", httpContext.Request.Path);
             if (httpContext.Request.Path == "/Tokens" || httpContext.Request.Path == "/NewSharelinkers")
             {
                 return _next(httpContext);
@@ -45,6 +45,7 @@ namespace TorontoAPIServer.Authentication
             }
             else
             {
+                NLog.LogManager.GetCurrentClassLogger().Info("Validate Failed:{0}", userId);
                 httpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                 return null;
             }

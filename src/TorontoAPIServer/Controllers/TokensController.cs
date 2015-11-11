@@ -34,6 +34,7 @@ namespace TorontoAPIServer.Controllers
                             RegistAPIServer = Startup.Server
                         };
                     }
+                    NLog.LogManager.GetCurrentClassLogger().Info("TokensController Validate Failed:Account:{0} Token:{1} Appkey:{2}", appkey, accountId, accessToken);
                     throw new Exception("Validate Failed");
                 }
                 var tokenResult = await tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
@@ -54,8 +55,9 @@ namespace TorontoAPIServer.Controllers
                     return tokenResult.Message;
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                NLog.LogManager.GetCurrentClassLogger().Error(ex, "TokensController:Server Error");
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 return "Server Error";
             }
