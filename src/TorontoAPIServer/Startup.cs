@@ -70,7 +70,6 @@ namespace TorontoAPIServer
             Appname = Configuration["Data:App:appname"];
             APIUrl = Server + "/api";
             SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
-            
         }
 
         // This method gets called by a runtime.

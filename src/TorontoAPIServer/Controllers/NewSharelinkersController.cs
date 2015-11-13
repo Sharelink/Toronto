@@ -7,6 +7,7 @@ using BahamutService.Model;
 using TorontoService;
 using TorontoModel.MongodbModel;
 using System.Net;
+using MongoDB.Bson;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -41,23 +42,28 @@ namespace TorontoAPIServer.Controllers
 
                 //Add SharelinkerCenter
                 var centerId = Startup.Configuration[string.Format("SharelinkCenter:{0}", region)];
+                var centerOId = new ObjectId(centerId);
                 await userService.CreateNewLinkWithOtherUser(newUserId, centerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked }, SharelinkerConstants.SharelinkCenterNickName);
 
                 //Add default share for user
                 var shareService = this.UseShareService().GetShareService();
-                var msg = Startup.Configuration[string.Format("InitShareThing:{0}:message", region)];
-                var content = Startup.Configuration[string.Format("InitShareThing:{0}:content", region)];
-                var contentType = Startup.Configuration[string.Format("InitShareThing:{0}:contentType", region)];
-                var defaultShareThing = await shareService.CreateNewSharelinkerDefaultShareThings(msg, contentType, content, centerId);
-                var shareMails = new ShareThingMail[]
+                var initShares = Startup.Configuration.GetSection(string.Format("InitShareThing:{0}:shares",region)).GetChildren();
+                var shares = from share in initShares select new ShareThing()
                 {
-                    new ShareThingMail()
-                    {
-                        ShareId = defaultShareThing.Id,
-                        Tags = new string[] { "Broadcast" },
-                        ToSharelinker = newUser.Id,
-                        Time = DateTime.UtcNow
-                    }
+                    Message = share["message"],
+                    ShareContent = share["content"],
+                    ShareType = share["contentType"],
+                    UserId = centerOId,
+                    Reshareable = true,
+                    ShareTime = DateTime.UtcNow
+                };
+                var defaultShareThings = await shareService.CreateNewSharelinkerDefaultShareThings(shares);
+                var shareMails = from s in defaultShareThings select new ShareThingMail()
+                {
+                    ShareId = s.Id,
+                    Tags = new string[] { "Broadcast" },
+                    ToSharelinker = newUser.Id,
+                    Time = DateTime.UtcNow
                 };
                 shareService.InsertMails(shareMails);
                 #endregion

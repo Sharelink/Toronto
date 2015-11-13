@@ -35,6 +35,7 @@ namespace TorontoModel.MongodbModel
         public const string SHARE_TYPE_FILM = "share:film";
 
         public const string SHARE_TYPE_MESSAGE_CUSTOM = "message:custom";
+        public const string SHARE_TYPE_MESSAGE_TEXT = "message:text";
         public const string SHARE_TYPE_MESSAGE_FOCUS_TAG = "message:focus_tag";
         public const string SHARE_TYPE_MESSAGE_ADD_TAG = "message:add_tag";
     }
