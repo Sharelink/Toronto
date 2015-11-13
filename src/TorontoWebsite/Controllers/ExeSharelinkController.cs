@@ -18,14 +18,17 @@ namespace TorontoWebsite.Controllers
             
             if (ua.Contains("ios") || ua.Contains("iphone") || ua.Contains("ipad") || ua.Contains("ipod"))
             {
+                NLog.LogManager.GetLogger("Request").Info("IOSExeSharelink");
                 return Redirect("~/IOSExeSharelink.html?cmd=" + cmd);
             }
             else if (ua.Contains("android"))
             {
+                NLog.LogManager.GetLogger("Request").Info("AndroidExeSharelink");
                 return Redirect("~/AndroidExeSharelink.html?cmd=" + cmd);
             }
             else if(ua.Contains("windows mobile") || ua.Contains("windows phone"))
             {
+                NLog.LogManager.GetLogger("Request").Info("WMExeSharelink");
                 return Redirect("~/WMExeSharelink.html?cmd=" + cmd);
             }
             else

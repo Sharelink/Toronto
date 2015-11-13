@@ -40,6 +40,7 @@ namespace TorontoAPIServer.Controllers
                 var tokenResult = await tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
                 if (tokenResult.Succeed)
                 {
+                    Startup.ValidatedUsers[userId] = tokenResult.UserSessionData.AppToken;
                     return new
                     {
                         AppToken = tokenResult.UserSessionData.AppToken,
@@ -51,6 +52,7 @@ namespace TorontoAPIServer.Controllers
                 }
                 else
                 {
+                    Startup.ValidatedUsers.Remove(userId);
                     Response.StatusCode = (int)HttpStatusCode.Unauthorized;
                     return tokenResult.Message;
                 }
@@ -71,6 +73,7 @@ namespace TorontoAPIServer.Controllers
             return await Task.Run(() =>
             {
                 var tokenService = Startup.ServicesProvider.GetTokenService();
+                Startup.ValidatedUsers.Remove(userId);
                 return tokenService.ReleaseAppToken(appkey, userId, appToken);
             });
         }

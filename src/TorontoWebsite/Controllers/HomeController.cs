@@ -13,6 +13,7 @@ namespace TorontoWebsite.Controllers
         // GET: /<controller>/
         public IActionResult Index()
         {
+            NLog.LogManager.GetLogger("Request").Info("Home");
             return View();
         }
     }

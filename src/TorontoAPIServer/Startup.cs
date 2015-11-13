@@ -14,6 +14,7 @@ using Microsoft.Framework.Logging;
 using MongoDB.Driver;
 using TorontoModel.MongodbModel;
 using NLog;
+using System.Collections.Generic;
 
 namespace TorontoAPIServer
 {
@@ -31,6 +32,7 @@ namespace TorontoAPIServer
         public static BahamutAppInstance BahamutAppInstance { get; private set; }
         public static string ChicagoServerAddress { get; private set; }
         public static int ChicagoServerPort { get; private set; }
+        public static IDictionary<string, string> ValidatedUsers { get; private set; }
 
         public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
 
@@ -42,6 +44,7 @@ namespace TorontoAPIServer
             // Setup configuration sources.
             HostingEnvironment = env;
             AppEnvironment = appEnv;
+            ValidatedUsers = new Dictionary<string, string>();
             var builder = new ConfigurationBuilder()
                 .SetBasePath(appEnv.ApplicationBasePath);
             if (env.IsDevelopment())
@@ -106,19 +109,18 @@ namespace TorontoAPIServer
             var fileTarget = new NLog.Targets.FileTarget();
             fileTarget.FileName = Configuration["Data:Log:logFile"];
             fileTarget.Name = "FileLogger";
-            fileTarget.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message}";
+            fileTarget.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message};${exception}";
             logConfig.AddTarget(fileTarget);
             logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, fileTarget));
-            LogManager.Configuration = logConfig;
-
             if (env.IsDevelopment())
             {
                 var consoleLogger = new NLog.Targets.ColoredConsoleTarget();
                 consoleLogger.Name = "ConsoleLogger";
-                consoleLogger.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message}";
+                consoleLogger.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message};${exception}";
                 logConfig.AddTarget(consoleLogger);
                 logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, consoleLogger));
             }
+            LogManager.Configuration = logConfig;
 
             //Regist App Instance
             var serverMgrService = ServicesProvider.GetServerControlManagementService();
@@ -131,7 +133,10 @@ namespace TorontoAPIServer
             try
             {
                 BahamutAppInstance = serverMgrService.RegistAppInstance(appInstance);
-                serverMgrService.StartKeepAlive(BahamutAppInstance.Id);
+                var observer = serverMgrService.StartKeepAlive(BahamutAppInstance);
+                observer.OnExpireError += KeepAliveObserver_OnExpireError;
+                observer.OnExpireOnce += KeepAliveObserver_OnExpireOnce;
+                LogManager.GetLogger("KeepAlive").Info("Keep Server Instance Alive To Server Controller Thread Started!");
             }
             catch (Exception ex)
             {
@@ -148,6 +153,19 @@ namespace TorontoAPIServer
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
 
             LogManager.GetCurrentClassLogger().Info("Toronto Started!");
+        }
+
+        private void KeepAliveObserver_OnExpireOnce(object sender, KeepAliveObserverEventArgs e)
+        {
+            LogManager.GetLogger("KeepAlive").Info(string.Format("Expired Instance:{0}", e.Instance.Id));
+        }
+
+        private void KeepAliveObserver_OnExpireError(object sender, KeepAliveObserverEventArgs e)
+        {
+            LogManager.GetLogger("KeepAlive").Error(string.Format("Expire Server Error.Instance:{0}", e.Instance.Id), e);
+            var serverMgrService = ServicesProvider.GetServerControlManagementService();
+            BahamutAppInstance.OnlineUsers = ValidatedUsers.Count;
+            serverMgrService.ReActiveAppInstance(BahamutAppInstance);
         }
     }
 
