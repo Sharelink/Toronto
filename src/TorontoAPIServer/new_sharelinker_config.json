@@ -24,7 +24,7 @@
         },
         {
           "message": "现在，开始你的Sharelink之旅吧！",
-          "content": "SharelinkFilm.mp4",
+          "content": "{\"film\" : \"SharelinkFilm.mp4\"}",
           "contentType": "share:film"
         }
       ]
