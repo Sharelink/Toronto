@@ -221,3 +221,4 @@ _Pvt_Extensions
 src/TorontoAPIServer/hosting.ini
 src/TorontoAPIServer/hosting.ini
 src/TorontoAPIServer/config_debug.json
+src/TorontoWebsite/config_debug.json
