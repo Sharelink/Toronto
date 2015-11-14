@@ -10,7 +10,7 @@
       "url": "mongodb://db.sharelink.online:27017"
     },
     "BahamutDBConnection": {
-      "connectionString": "server=bahamutdb.sharelink.online;user id=root;password=sharelinkbest;persistsecurityinfo=False;database=BahamutDB;Pooling=true; Max Pool Size=50;"
+      "connectionString": "server=bahamutdb.sharelink.online;user id=root;password=sharelinkbest;Charset=utf8;persistsecurityinfo=False;database=BahamutDB;Pooling=true; Max Pool Size=50;"
     },
     "TokenServer": {
       "url": "redis://token.sharelink.online:6379"

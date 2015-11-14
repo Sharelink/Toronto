@@ -13,14 +13,19 @@
           "contentType": "message:text"
         },
         {
-          "message": "欢迎来到Sharelink！你可以看到你的好友最近关注的主题然后也关注哦！如果你想关注一个人的所有分享，那么你就关注Ta吧，Ta也是一个主题哦！",
+          "message": "你可以看到你的好友最近关注的主题然后也关注哦！如果你想关注一个人的所有分享，那么你就关注Ta吧，Ta也是一个主题哦！",
           "content": "",
           "contentType": "message:text"
         },
         {
-          "message": "欢迎来到Sharelink！在这里，你只可以看到你关注的，营销广告什么的都没有，赶快邀请你的好友一起加入Sharelink，在你们共同的主题分享吧！",
+          "message": "在这里，你只可以看到你关注的，营销广告什么的都没有，赶快邀请你的好友一起加入Sharelink吧！",
           "content": "",
           "contentType": "message:text"
+        },
+        {
+          "message": "现在，开始你的Sharelink之旅吧！",
+          "content": "SharelinkFilm.mp4",
+          "contentType": "share:film"
         }
       ]
       
@@ -33,14 +38,14 @@
           "contentType": "message:text"
         },
         {
-          "message": "Welcome to Sharelink! You can share attach with themes to your linkers who focus this themes. Focus humam theme means you can see all its shares.",
+          "message": "You can share attach with themes to your linkers who focus this themes. Focus humam theme means you can see all its shares.",
           "content": "",
           "contentType": "message:text"
         },
         {
-          "message": "Welcome to Sharelink! Go to link she or he immediately and enjoy your Sharelink time!",
-          "content": "",
-          "contentType": "message:text"
+          "message": "Go to link she or he immediately and enjoy your Sharelink time!",
+          "content": "{\"film\" : \"SharelinkFilm.mp4\"}",
+          "contentType": "share:film"
         }
       ]
     }

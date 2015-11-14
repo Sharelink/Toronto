@@ -48,23 +48,26 @@ namespace TorontoAPIServer.Controllers
                 //Add default share for user
                 var shareService = this.UseShareService().GetShareService();
                 var initShares = Startup.Configuration.GetSection(string.Format("InitShareThing:{0}:shares",region)).GetChildren();
-                var shares = from share in initShares select new ShareThing()
-                {
-                    Message = share["message"],
-                    ShareContent = share["content"],
-                    ShareType = share["contentType"],
-                    UserId = centerOId,
-                    Reshareable = true,
-                    ShareTime = DateTime.UtcNow
-                };
+                var now = DateTime.UtcNow.Ticks;
+                var shares = from share in initShares
+                             select new ShareThing()
+                             {
+                                 Message = share["message"],
+                                 ShareContent = share["content"],
+                                 ShareType = share["contentType"],
+                                 UserId = centerOId,
+                                 Reshareable = true,
+                                 ShareTime = new DateTime((now -= 70000000))
+                             };
                 var defaultShareThings = await shareService.CreateNewSharelinkerDefaultShareThings(shares);
-                var shareMails = from s in defaultShareThings select new ShareThingMail()
-                {
-                    ShareId = s.Id,
-                    Tags = new string[] { "Broadcast" },
-                    ToSharelinker = newUser.Id,
-                    Time = DateTime.UtcNow
-                };
+                var shareMails = from s in defaultShareThings
+                                 select new ShareThingMail()
+                                 {
+                                     ShareId = s.Id,
+                                     Tags = new string[] { "Broadcast" },
+                                     ToSharelinker = newUser.Id,
+                                     Time = s.ShareTime
+                                 };
                 shareService.InsertMails(shareMails);
                 #endregion
 
