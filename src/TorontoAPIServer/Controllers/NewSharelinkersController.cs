@@ -48,7 +48,7 @@ namespace TorontoAPIServer.Controllers
                 //Add default share for user
                 var shareService = this.UseShareService().GetShareService();
                 var initShares = Startup.Configuration.GetSection(string.Format("InitShareThing:{0}:shares",region)).GetChildren();
-                var now = DateTime.UtcNow.Ticks;
+                var now = 0;
                 var shares = from share in initShares
                              select new ShareThing()
                              {
@@ -57,7 +57,7 @@ namespace TorontoAPIServer.Controllers
                                  ShareType = share["contentType"],
                                  UserId = centerOId,
                                  Reshareable = true,
-                                 ShareTime = new DateTime((now -= 70000000))
+                                 ShareTime = DateTime.UtcNow.AddSeconds(now -= 7) //sort by time
                              };
                 var defaultShareThings = await shareService.CreateNewSharelinkerDefaultShareThings(shares);
                 var shareMails = from s in defaultShareThings
