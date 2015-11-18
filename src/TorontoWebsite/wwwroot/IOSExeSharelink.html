@@ -5,6 +5,7 @@
     <title>Sharelink</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=yes">
+    <meta name="robots" content="all" />
     <link rel="icon" href="images/favicon.ico" />
     <link rel="stylesheet" href="css/style.css">
     <script src="http://libs.baidu.com/jquery/2.1.4/jquery.min.js"></script>
@@ -18,7 +19,7 @@
         <button id="openApp" style="font-size:larger" onclick="javascript: redirectAppStore();">Sharelink In App Store</button>
         <p class="connect p" style="color:crimson">微信和QQ用户请通过右上角按钮使用Safari打开~</p>
     </div>
-    
+
     <script type="text/javascript">
         var appStoreUrl = 'https://itunes.apple.com/cn/app/id1059287119'
 
@@ -27,8 +28,8 @@
             return true;
         }
 
-        var slUrl  = 'sharelink://'+ getUrlParam('cmd');
-		// 通过iframe的方式试图打开APP，如果能正常打开，会直接切换到APP，并自动阻止a标签的默认行为
+        var slUrl = 'sharelink://' + getUrlParam('cmd');
+        // 通过iframe的方式试图打开APP，如果能正常打开，会直接切换到APP，并自动阻止a标签的默认行为
         // 否则打开a标签的href链接
 
         var ifr = document.createElement('iframe');
