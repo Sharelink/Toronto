@@ -1,20 +1,17 @@
 ﻿using System;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
-using Microsoft.Framework.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using TorontoAPIServer.Authentication;
-using Microsoft.Framework.Configuration;
+using Microsoft.Extensions.Configuration;
 using BahamutService;
 using BahamutCommon;
-using Microsoft.Dnx.Runtime;
 using ServerControlService.Service;
 using ServerControlService.Model;
 using ServiceStack.Redis;
-using Microsoft.Framework.Logging;
-using MongoDB.Driver;
-using TorontoModel.MongodbModel;
 using NLog;
 using System.Collections.Generic;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace TorontoAPIServer
 {
@@ -166,6 +163,9 @@ namespace TorontoAPIServer
             BahamutAppInstance.OnlineUsers = ValidatedUsers.Count;
             serverMgrService.ReActiveAppInstance(BahamutAppInstance);
         }
+
+        // Entry point for the application.
+        public static void Main(string[] args) => WebApplication.Run<Startup>(args);
     }
 
     public static class IGetBahamutServiceExtension

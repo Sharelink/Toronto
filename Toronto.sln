@@ -8,7 +8,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6DA3B8CE-0D88-4D76-8BBD-86DA1D88A6D1}"
 	ProjectSection(SolutionItems) = preProject
 		global.json = global.json
-		NuGet.Config = NuGet.Config
 	EndProjectSection
 EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "TorontoDataManager", "src\TorontoDataManager\TorontoDataManager.xproj", "{2DC8EEE8-55DD-4F14-85C8-36AEBEE881AB}"
