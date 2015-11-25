@@ -137,13 +137,21 @@ namespace TorontoAPIServer.Controllers
         [HttpDelete]
         public async void Delete(string tagIds)
         {
-            var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var ids = tagIds.Split('#');
-            var isSuc = await sharelinkTagService.DeleteSharelinkTags(UserSessionData.UserId, ids);
-            if (!isSuc)
+            try
             {
-                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
+                var ids = tagIds.Split('#');
+                var isSuc = await sharelinkTagService.DeleteSharelinkTags(UserSessionData.UserId, ids);
+                if (!isSuc)
+                {
+                    Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                }
             }
+            catch (Exception ex)
+            {
+                NLog.LogManager.GetCurrentClassLogger().Error(ex.Message);
+            }
+            
         }
     }
 }
