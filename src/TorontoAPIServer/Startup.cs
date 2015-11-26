@@ -50,7 +50,7 @@ namespace TorontoAPIServer
             }
             else
             {
-                builder.AddJsonFile("config.json");
+                builder.AddJsonFile("/etc/bahamut/toronto.json");
             }
 
             builder.AddJsonFile("new_sharelinker_config.json");

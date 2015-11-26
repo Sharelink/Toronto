@@ -66,25 +66,19 @@ namespace TorontoAPIServer.Controllers
             var newlink = await service.CreateNewLinkWithOtherUser(UserSessionData.UserId, sharelinkerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked },noteName);
             await service.CreateNewLinkWithOtherUser(sharelinkerId, UserSessionData.UserId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked });
             var me = await service.GetUserOfUserId(UserSessionData.UserId);
-            using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-            {
 
-                var linkreq = new LinkMessage()
-                {
-                    SharelinkerId = UserSessionData.UserId,
-                    Type = LinkMessageConstants.LINK_MESSAGE_TYPE_ACCEPT_LINK,
-                    Avatar = me.Avatar,
-                    Id = DateTime.UtcNow.Ticks.ToString(),
-                    Message = "accept",
-                    SharelinkerNick = me.NickName,
-                    Time = DateTime.UtcNow
-                };
-                messageCache.As<LinkMessage>().Lists[sharelinkerId].Add(linkreq);
-                using (var psClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-                {
-                    psClient.PublishMessage(sharelinkerId, "LinkMessage");
-                }
-            }
+            var linkreq = new LinkMessage()
+            {
+                SharelinkerId = UserSessionData.UserId,
+                Type = LinkMessageConstants.LINK_MESSAGE_TYPE_ACCEPT_LINK,
+                Avatar = me.Avatar,
+                Id = DateTime.UtcNow.Ticks.ToString(),
+                Message = "accept",
+                SharelinkerNick = me.NickName,
+                Time = DateTime.UtcNow
+            };
+            Startup.PublishSubscriptionManager.PublishLinkMessages(sharelinkerId, linkreq);
+
             var u = await service.GetUserOfUserId(sharelinkerId);
             var newLink = new
             {
@@ -119,7 +113,9 @@ namespace TorontoAPIServer.Controllers
             {
                 using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
-                    messageCache.As<LinkMessage>().Lists[UserSessionData.UserId].RemoveAll();
+                    var client = messageCache.As<LinkMessage>();
+                    var list = client.Lists[UserSessionData.UserId];
+                    client.RemoveAllFromList(list);
                 }
                 return true;
             });

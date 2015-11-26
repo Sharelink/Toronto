@@ -27,7 +27,7 @@ namespace TorontoWebsite
             }
             else
             {
-                builder.AddJsonFile("config.json");
+                builder.AddJsonFile("/etc/bahamut/website.json");
             }
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();

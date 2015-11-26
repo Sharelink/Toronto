@@ -45,8 +45,9 @@ namespace TorontoAPIServer.Controllers
             {
                 using (var msc = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
                 {
-                    var list = msc.As<ChatMessage>().Lists[UserSessionData.UserId];
-                    msc.As<ChatMessage>().RemoveAllFromList(list);
+                    var client = msc.As<ChatMessage>();
+                    var list = client.Lists[UserSessionData.UserId];
+                    client.RemoveAllFromList(list);
                 }
             });
         }
@@ -72,7 +73,6 @@ namespace TorontoAPIServer.Controllers
                                        time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
                                        msgType = m.MessageType
                                    };
-                    msc.As<ChatMessage>().RemoveAllFromList(list);
                     return messages.ToArray();
                 }
             });

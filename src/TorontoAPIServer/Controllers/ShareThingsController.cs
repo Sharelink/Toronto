@@ -111,8 +111,9 @@ namespace TorontoAPIServer.Controllers
         {
             using (var msgClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
             {
-                var msgList = msgClient.As<ShareThingUpdatedMessage>().Lists[UserSessionData.UserId];
-                msgList.RemoveAll();
+                var client = msgClient.As<ShareThingUpdatedMessage>();
+                var msgList = client.Lists[UserSessionData.UserId];
+                client.RemoveAllFromList(msgList);
             }
         }
 
