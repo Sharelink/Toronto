@@ -132,6 +132,7 @@ namespace TorontoAPIServer
                 var observer = serverMgrService.StartKeepAlive(BahamutAppInstance);
                 observer.OnExpireError += KeepAliveObserver_OnExpireError;
                 observer.OnExpireOnce += KeepAliveObserver_OnExpireOnce;
+                LogManager.GetLogger("Toronto").Info("Bahamut App Instance:" + BahamutAppInstance.Id.ToString());
                 LogManager.GetLogger("KeepAlive").Info("Keep Server Instance Alive To Server Controller Thread Started!");
             }
             catch (Exception ex)
@@ -153,7 +154,7 @@ namespace TorontoAPIServer
 
         private void KeepAliveObserver_OnExpireOnce(object sender, KeepAliveObserverEventArgs e)
         {
-            LogManager.GetLogger("KeepAlive").Info(string.Format("Expired Instance:{0}", e.Instance.Id));
+            
         }
 
         private void KeepAliveObserver_OnExpireError(object sender, KeepAliveObserverEventArgs e)
