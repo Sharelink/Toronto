@@ -18,7 +18,7 @@ namespace TorontoAPIServer.Controllers
 
         //POST /Votes/{shareId} : vote sharething of shareId
         [HttpPost("{shareId}")]
-        public async void Post(string shareId)
+        public async Task Post(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
             var share = await shareService.VoteShare(UserSessionData.UserId, shareId);
@@ -32,7 +32,7 @@ namespace TorontoAPIServer.Controllers
 
         //DELETE /Votes/{shareId} : vote sharething of shareId
         [HttpDelete("{shareId}")]
-        public async void Delete(string shareId)
+        public async Task Delete(string shareId)
         {
             var shareService = this.UseShareService().GetShareService();
             await shareService.UnvoteShare(UserSessionData.UserId, shareId);

@@ -36,7 +36,7 @@ namespace TorontoAPIServer.Controllers
 
         // PUT /Accounts/Name (name) : update my account name properties
         [HttpPut("Name")]
-        public async void PutName(string name)
+        public async Task PutName(string name)
         {
             await Task.Run(() =>
             {
@@ -57,7 +57,7 @@ namespace TorontoAPIServer.Controllers
 
         // PUT /Accounts/Name (name) : update my account birth properties
         [HttpPut("BirthDate")]
-        public async void PutBirthDate(string birthdate)
+        public async Task PutBirthDate(string birthdate)
         {
             await Task.Run(() =>
             {

@@ -12,6 +12,9 @@ using ServiceStack.Redis;
 using NLog;
 using System.Collections.Generic;
 using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.AspNet.Mvc.Filters;
+using System.Threading.Tasks;
+using System.Net;
 
 namespace TorontoAPIServer
 {
@@ -73,7 +76,11 @@ namespace TorontoAPIServer
         // Use this method to add services to the container
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services.AddMvc(config => {
+                config.Filters.Add(new LogExceptionFilter());
+            });
+
+            services.AddScoped<LogExceptionFilter>();
 
             var tokenServerUrl = Configuration["Data:TokenServer:url"].Replace("redis://", "");
             var TokenServerClientManager = new PooledRedisClientManager(tokenServerUrl);
@@ -105,14 +112,14 @@ namespace TorontoAPIServer
             var fileTarget = new NLog.Targets.FileTarget();
             fileTarget.FileName = Configuration["Data:Log:logFile"];
             fileTarget.Name = "FileLogger";
-            fileTarget.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message};${exception}";
+            fileTarget.Layout = @"${date:format=yyyy-MM-dd HH\:mm\:ss} ${logger}:${message};${exception}";
             logConfig.AddTarget(fileTarget);
             logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, fileTarget));
             if (env.IsDevelopment())
             {
                 var consoleLogger = new NLog.Targets.ColoredConsoleTarget();
                 consoleLogger.Name = "ConsoleLogger";
-                consoleLogger.Layout = @"${date:format=HH\:mm\:ss} ${logger}:${message};${exception}";
+                consoleLogger.Layout = @"${date:format=yyyy-MM-dd HH\:mm\:ss} ${logger}:${message};${exception}";
                 logConfig.AddTarget(consoleLogger);
                 logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, consoleLogger));
             }

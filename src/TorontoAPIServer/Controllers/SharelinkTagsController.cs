@@ -119,7 +119,7 @@ namespace TorontoAPIServer.Controllers
 
         // PUT /SharelinkTags/{tagId}: update tag property
         [HttpPut("{tagId}")]
-        public async void PutTag(string tagId, string tagName, string tagColor, string type, string data, string isFocus,string isShowToLinkers)
+        public async Task PutTag(string tagId, string tagName, string tagColor, string type, string data, string isFocus,string isShowToLinkers)
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
             bool focus = false;
@@ -135,7 +135,7 @@ namespace TorontoAPIServer.Controllers
 
         // DELETE /SharelinkTags (tagIds) : delete the tag,and all the user has link to this tag will be dislink
         [HttpDelete]
-        public async void Delete(string tagIds)
+        public async Task Delete(string tagIds)
         {
             try
             {

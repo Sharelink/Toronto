@@ -39,7 +39,7 @@ namespace TorontoAPIServer.Controllers
         }
 
         [HttpDelete("New")]
-        public async void DeleteNewMessages()
+        public async Task DeleteNewMessages()
         {
             await Task.Run(() =>
             {

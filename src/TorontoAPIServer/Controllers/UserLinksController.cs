@@ -36,7 +36,7 @@ namespace TorontoAPIServer.Controllers
 
         //PUT /UserLinks (myUserId,otherUserId,newState) : update my userlink status with other people
         [HttpPut("NoteName")]
-        public async void PutUpdateNoteName(string userId, string newNoteName)
+        public async Task PutUpdateNoteName(string userId, string newNoteName)
         {
             var service = this.UseSharelinkerService().GetSharelinkerService();
             var suc = await service.UpdateLinkedUserNoteName(UserSessionData.UserId, userId, newNoteName);
@@ -48,7 +48,7 @@ namespace TorontoAPIServer.Controllers
 
         //PUT /UserLinks (myUserId,otherUserId,newState) : update my userlink status with other people
         [HttpPut]
-        public async void Put(string userId, string newState)
+        public async Task Put(string userId, string newState)
         {
             var service = this.UseSharelinkerService().GetSharelinkerService();
             var ns = new SharelinkerLink.State() { LinkState = int.Parse(newState) };
