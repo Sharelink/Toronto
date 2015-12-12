@@ -7,6 +7,7 @@ using TorontoService;
 using BahamutCommon;
 using BahamutService.Model;
 using MongoDB.Driver;
+using NLog;
 
 namespace TorontoAPIServer.Controllers
 {
@@ -42,6 +43,22 @@ namespace TorontoAPIServer.Controllers
             }
         }
 
+        public void LogInfo(string message,params object[] args)
+        {
+            LogManager.GetLogger("Info").Info(message, args);
+        }
+
+        public void LogWarning(string message,Exception exception = null)
+        {
+            if(exception == null)
+            {
+                LogManager.GetLogger("Warning").Warn(message);
+            }
+            else
+            {
+                LogManager.GetLogger("Warning").Warn(exception, message);
+            }
+        }
     }
 
     public class TorontoServiceProviderUseMongoDb:TorontoServiceProvider

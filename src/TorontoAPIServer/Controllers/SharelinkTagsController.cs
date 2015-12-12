@@ -35,8 +35,6 @@ namespace TorontoAPIServer.Controllers
             {
                 return new object[0];
             }
-            
-            
         }
 
         // POST /SharelinkTags (tagName,tagColor,data,isFocus):add a new user tag to my tags collection
@@ -149,7 +147,8 @@ namespace TorontoAPIServer.Controllers
             }
             catch (Exception ex)
             {
-                NLog.LogManager.GetCurrentClassLogger().Error(ex.Message);
+                LogWarning(ex.Message, ex);
+                Response.StatusCode = (int)HttpStatusCode.InternalServerError;
             }
             
         }

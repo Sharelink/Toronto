@@ -19,7 +19,6 @@ namespace TorontoAPIServer.Controllers
         [HttpGet]
         public async Task<object[]> Get(string userIds)
         {
-            
             string[] ids = userIds != null ? userIds.Split('#') : null;
             var userService = this.UseSharelinkerService().GetSharelinkerService();
             var users = await userService.GetLinkedUsersOfUserId(UserSessionData.UserId, ids);

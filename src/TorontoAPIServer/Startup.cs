@@ -2,7 +2,6 @@
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using TorontoAPIServer.Authentication;
 using Microsoft.Extensions.Configuration;
 using BahamutService;
 using BahamutCommon;
@@ -15,6 +14,9 @@ using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.AspNet.Mvc.Filters;
 using System.Threading.Tasks;
 using System.Net;
+using System.Linq;
+using NLog.Targets;
+using NLog.Config;
 
 namespace TorontoAPIServer
 {
@@ -77,10 +79,8 @@ namespace TorontoAPIServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc(config => {
-                config.Filters.Add(new LogExceptionFilter());
+                config.Filters.Add(new BahamutAspNetCommon.LogExceptionFilter());
             });
-
-            services.AddScoped<LogExceptionFilter>();
 
             var tokenServerUrl = Configuration["Data:TokenServer:url"].Replace("redis://", "");
             var TokenServerClientManager = new PooledRedisClientManager(tokenServerUrl);
@@ -97,9 +97,6 @@ namespace TorontoAPIServer
             var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
             var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
             PublishSubscriptionManager = new PublishSubscriptionManager(pbClientManager,mcClientManager);
-            // Uncomment the following line to add Web API services which makes it easier to port Web API 2 controllers.
-            // You will also need to add the Microsoft.AspNet.Mvc.WebApiCompatShim package to the 'dependencies' section of project.json.
-            // services.AddWebApiConventions();
         }
 
         // Configure is called after ConfigureServices is called.
@@ -108,20 +105,12 @@ namespace TorontoAPIServer
             ServicesProvider = app.ApplicationServices;
 
             //Log
-            var logConfig = new NLog.Config.LoggingConfiguration();
-            var fileTarget = new NLog.Targets.FileTarget();
-            fileTarget.FileName = Configuration["Data:Log:logFile"];
-            fileTarget.Name = "FileLogger";
-            fileTarget.Layout = @"${date:format=yyyy-MM-dd HH\:mm\:ss} ${logger}:${message};${exception}";
-            logConfig.AddTarget(fileTarget);
-            logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, fileTarget));
+            var logConfig = new LoggingConfiguration();
+            LoggerLoaderHelper.LoadLoggerToLoggingConfig(logConfig, Configuration, "Data:Log:fileLoggers");
+
             if (env.IsDevelopment())
             {
-                var consoleLogger = new NLog.Targets.ColoredConsoleTarget();
-                consoleLogger.Name = "ConsoleLogger";
-                consoleLogger.Layout = @"${date:format=yyyy-MM-dd HH\:mm\:ss} ${logger}:${message};${exception}";
-                logConfig.AddTarget(consoleLogger);
-                logConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", NLog.LogLevel.Debug, consoleLogger));
+                LoggerLoaderHelper.AddConsoleLoggerToLogginConfig(logConfig);
             }
             LogManager.Configuration = logConfig;
 
@@ -139,24 +128,27 @@ namespace TorontoAPIServer
                 var observer = serverMgrService.StartKeepAlive(BahamutAppInstance);
                 observer.OnExpireError += KeepAliveObserver_OnExpireError;
                 observer.OnExpireOnce += KeepAliveObserver_OnExpireOnce;
-                LogManager.GetLogger("Toronto").Info("Bahamut App Instance:" + BahamutAppInstance.Id.ToString());
-                LogManager.GetLogger("KeepAlive").Info("Keep Server Instance Alive To Server Controller Thread Started!");
+                LogManager.GetLogger("Main").Info("Bahamut App Instance:" + BahamutAppInstance.Id.ToString());
+                LogManager.GetLogger("Main").Info("Keep Server Instance Alive To Server Controller Thread Started!");
             }
             catch (Exception ex)
             {
-                LogManager.GetCurrentClassLogger().Error(ex, "Unable To Regist App Instance");
+                LogManager.GetLogger("Main").Error(ex, "Unable To Regist App Instance");
             }
 
-            app.UseMiddleware<BasicAuthentication>(Appkey);
-            // Configure the HTTP request pipeline.
-            app.UseStaticFiles();
+            //Authentication
+            var openRoutes = new string[]
+            {
+                "/Tokens",
+                "/NewSharelinkers"
+            };
+            app.UseMiddleware<BahamutAspNetCommon.TokenAuthentication>(Appkey, ServicesProvider.GetTokenService(), openRoutes);
 
             // Add MVC to the request pipeline.
             app.UseMvc();
             // Add the following route for porting Web API 2 controllers.
             // routes.MapWebApiRoute("DefaultApi", "api/{controller}/{id?}");
-
-            LogManager.GetCurrentClassLogger().Info("Toronto Started!");
+            LogManager.GetLogger("Main").Info("Toronto Started!");
         }
 
         private void KeepAliveObserver_OnExpireOnce(object sender, KeepAliveObserverEventArgs e)
@@ -166,7 +158,7 @@ namespace TorontoAPIServer
 
         private void KeepAliveObserver_OnExpireError(object sender, KeepAliveObserverEventArgs e)
         {
-            LogManager.GetLogger("KeepAlive").Error(string.Format("Expire Server Error.Instance:{0}", e.Instance.Id), e);
+            LogManager.GetLogger("Main").Error(string.Format("Expire Server Error.Instance:{0}", e.Instance.Id), e);
             var serverMgrService = ServicesProvider.GetServerControlManagementService();
             BahamutAppInstance.OnlineUsers = ValidatedUsers.Count;
             serverMgrService.ReActiveAppInstance(BahamutAppInstance);

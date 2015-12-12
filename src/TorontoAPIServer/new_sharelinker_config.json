@@ -13,12 +13,12 @@
           "contentType": "message:text"
         },
         {
-          "message": "你可以看到你的好友最近关注的主题然后也关注哦！如果你想关注一个人的所有分享，那么你就关注Ta吧，Ta也是一个主题哦！",
+          "message": "好友最新关注的主题是公开的！每一个人都拥有自己的个人主题。关注个人主题，Ta分享的所有都能看到。",
           "content": "",
           "contentType": "message:text"
         },
         {
-          "message": "在这里，你只可以看到你关注的，营销广告什么的都没有，赶快邀请你的好友一起加入Sharelink吧！",
+          "message": "赶快邀请你的好友一起加入Sharelink吧！",
           "content": "",
           "contentType": "message:text"
         },

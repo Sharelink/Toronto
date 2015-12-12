@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using TorontoService;
 using System.Net;
 using BahamutService;
+using NLog;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -18,6 +19,7 @@ namespace TorontoAPIServer.Controllers
         [HttpGet]
         public async Task<object> Get(string appkey, string accountId, string accessToken)
         {
+            LogInfo("Account:{0} Validating", accountId);
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userService = this.UseSharelinkerService().GetSharelinkerService();
             try
@@ -29,17 +31,20 @@ namespace TorontoAPIServer.Controllers
                     var tr = await tokenService.ValidateToGetSessionData(appkey, accountId, accessToken);
                     if (tr != null)
                     {
+                        LogInfo("Account:{0} Registing", accountId);
                         return new
                         {
                             RegistAPIServer = Startup.Server
                         };
                     }
-                    NLog.LogManager.GetCurrentClassLogger().Info("TokensController Validate Failed:Account:{0} Token:{1} Appkey:{2}", appkey, accountId, accessToken);
-                    throw new Exception("Validate Failed");
+                    LogManager.GetLogger("Warning").Warn("Validate Failed:Account:{0} Token:{1} Appkey:{2}", appkey, accountId, accessToken);
+                    Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+                    return "Validate Failed";
                 }
                 var tokenResult = await tokenService.ValidateAccessToken(appkey, accountId, accessToken, userId);
                 if (tokenResult.Succeed)
                 {
+                    LogInfo("User:{0} Validate Success", userId);
                     Startup.ValidatedUsers[userId] = tokenResult.UserSessionData.AppToken;
                     return new
                     {
@@ -59,9 +64,8 @@ namespace TorontoAPIServer.Controllers
             }
             catch (Exception ex)
             {
-                NLog.LogManager.GetCurrentClassLogger().Error(ex, "TokensController:Server Error");
                 Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                return "Server Error";
+                throw ex;
             }
 
         }
