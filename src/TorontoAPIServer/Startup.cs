@@ -36,6 +36,9 @@ namespace TorontoAPIServer
         public static int ChicagoServerPort { get; private set; }
         public static IDictionary<string, string> ValidatedUsers { get; private set; }
 
+        public static IList<string> SharelinkCenterList { get; private set; }
+        public static IDictionary<string,string> SharelinkCenters { get; private set; }
+
         public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
 
         public static IHostingEnvironment HostingEnvironment { get; private set; }
@@ -47,9 +50,30 @@ namespace TorontoAPIServer
             HostingEnvironment = env;
             AppEnvironment = appEnv;
             ValidatedUsers = new Dictionary<string, string>();
+            ReadConfig();
+            SetServerConfig();
+            InitSharelinkCenter();
+        }
+
+        private static void SetServerConfig()
+        {
+            BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
+            FileApiUrl = Configuration["Data:FileServer:url"];
+            Server = Configuration["Data:App:url"];
+            ChicagoServerAddress = Configuration["Data:ChicagoServer:host"];
+            ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
+
+            Appkey = Configuration["Data:App:appkey"];
+            Appname = Configuration["Data:App:appname"];
+            APIUrl = Server + "/api";
+            SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
+        }
+
+        private static void ReadConfig()
+        {
             var builder = new ConfigurationBuilder()
-                .SetBasePath(appEnv.ApplicationBasePath);
-            if (env.IsDevelopment())
+                            .SetBasePath(AppEnvironment.ApplicationBasePath);
+            if (HostingEnvironment.IsDevelopment())
             {
                 builder.AddJsonFile("config_debug.json");
             }
@@ -61,17 +85,18 @@ namespace TorontoAPIServer
             builder.AddJsonFile("new_sharelinker_config.json");
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
+        }
 
-            BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
-            FileApiUrl = Configuration["Data:FileServer:url"];
-            Server = Configuration["Data:App:url"];
-            ChicagoServerAddress = Configuration["Data:ChicagoServer:host"];
-            ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
-
-            Appkey = Configuration["Data:App:appkey"];
-            Appname = Configuration["Data:App:appname"];
-            APIUrl = Server + "/api";
-            SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
+        private void InitSharelinkCenter()
+        {
+            SharelinkCenterList = new List<string>();
+            SharelinkCenters = new Dictionary<string, string>();
+            var centers = Configuration.GetSection("SharelinkCenter:centers").GetChildren();
+            foreach (var c in centers)
+            {
+                SharelinkCenterList.Add(c["id"]);
+                SharelinkCenters[c["region"]] = c["id"];
+            }
         }
 
         // This method gets called by a runtime.

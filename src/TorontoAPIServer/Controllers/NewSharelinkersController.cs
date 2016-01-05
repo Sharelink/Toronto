@@ -41,7 +41,16 @@ namespace TorontoAPIServer.Controllers
                 await userService.CreateNewLinkWithOtherUser(newUserId, newUserId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked },nickName);
 
                 //Add SharelinkerCenter
-                var centerId = Startup.Configuration[string.Format("SharelinkCenter:{0}", region)];
+                var centerId = "";
+                try
+                {
+                    centerId = Startup.SharelinkCenters[region];
+                }
+                catch (Exception)
+                {
+                    centerId = Startup.SharelinkCenters["cn"];
+                }
+                    
                 var centerOId = new ObjectId(centerId);
                 await userService.CreateNewLinkWithOtherUser(newUserId, centerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked }, SharelinkerConstants.SharelinkCenterNickName);
 

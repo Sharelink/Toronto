@@ -46,11 +46,48 @@ namespace TorontoAPIServer.Controllers
             var thingMails = await service.GetUserShareMails(UserSessionData.UserId, begin, end, page, pageCount);
             var shareIds = from tm in thingMails select tm.ShareId;
             var things = await service.GetShares(shareIds);
-            return await shareThingsToResults(things);
-            
+            if (Startup.SharelinkCenterList.Contains(UserSessionData.UserId))
+            {
+                return FeedbackSharesToResults(things);
+            }
+            return await ShareThingsToResults(things);
         }
 
-        private async Task<object[]> shareThingsToResults(IEnumerable<ShareThing> shares)
+        private object[] FeedbackSharesToResults(IEnumerable<ShareThing> shares)
+        {
+            var result = new List<object>();
+            foreach (var share in shares)
+            {
+                var uId = share.UserId.ToString();
+                try
+                {
+                    var userAvatar = "";
+                    var shareContent = share.ShareContent;
+                    result.Add(new
+                    {
+                        shareId = share.Id.ToString(),
+                        pShareId = share.PShareId.ToString(),
+                        userId = uId,
+                        userNick = share.UserId,
+                        avatarId = userAvatar,
+                        shareTime = DateTimeUtil.ToString(share.ShareTime),
+                        shareType = share.ShareType,
+                        message = share.Message,
+                        shareContent = shareContent,
+                        voteUsers = (from v in share.Votes select v.UserId.ToString()).ToArray(),
+                        forTags = share.Tags,
+                        reshareable = share.Reshareable.ToString().ToLower()
+                    });
+                }
+                catch (Exception)
+                {
+                }
+
+            }
+            return result.ToArray();
+        }
+
+        private async Task<object[]> ShareThingsToResults(IEnumerable<ShareThing> shares)
         {
             var usrService = this.UseSharelinkerService().GetSharelinkerService();
             var users = await usrService.GetUserLinkedUsers(UserSessionData.UserId);
@@ -58,24 +95,32 @@ namespace TorontoAPIServer.Controllers
             foreach (var share in shares)
             {
                 var uId = share.UserId.ToString();
-                var user = users[uId];
-                var userAvatar = "";
-                var shareContent = share.ShareContent;
-                result.Add(new
+                try
                 {
-                    shareId = share.Id.ToString(),
-                    pShareId = share.PShareId.ToString(),
-                    userId = uId,
-                    userNick = user.NoteName,
-                    avatarId = userAvatar,
-                    shareTime = DateTimeUtil.ToString(share.ShareTime),
-                    shareType = share.ShareType,
-                    message = share.Message,
-                    shareContent = shareContent ,
-                    voteUsers = (from v in share.Votes select v.UserId.ToString()).ToArray(),
-                    forTags = share.Tags,
-                    reshareable = share.Reshareable.ToString().ToLower()
-                });
+                    var user = users[uId];
+                    var userAvatar = "";
+                    var shareContent = share.ShareContent;
+                    result.Add(new
+                    {
+                        shareId = share.Id.ToString(),
+                        pShareId = share.PShareId.ToString(),
+                        userId = uId,
+                        userNick = user.NoteName,
+                        avatarId = userAvatar,
+                        shareTime = DateTimeUtil.ToString(share.ShareTime),
+                        shareType = share.ShareType,
+                        message = share.Message,
+                        shareContent = shareContent,
+                        voteUsers = (from v in share.Votes select v.UserId.ToString()).ToArray(),
+                        forTags = share.Tags,
+                        reshareable = share.Reshareable.ToString().ToLower()
+                    });
+                }
+                catch (Exception)
+                {
+                    
+                }
+                
             }
             return result.ToArray();
         }
@@ -86,7 +131,7 @@ namespace TorontoAPIServer.Controllers
             var ids = shareIds.Split('#');
             var service = this.UseShareService().GetShareService();
             var things = await service.GetShares(from id in ids select new ObjectId(id));
-            return await shareThingsToResults(things);
+            return await ShareThingsToResults(things);
         }
 
         [HttpGet("Updated")]

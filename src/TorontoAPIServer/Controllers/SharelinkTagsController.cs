@@ -103,13 +103,16 @@ namespace TorontoAPIServer.Controllers
             var newMails = new List<ShareThingMail>();
             foreach (var linker in linkerIds)
             {
-                var newMail = new ShareThingMail()
+                if (!Startup.SharelinkCenterList.Contains(linker.ToString()))
                 {
-                    ShareId = newShare.Id,
-                    Time = DateTime.UtcNow,
-                    ToSharelinker = linker
-                };
-                newMails.Add(newMail);
+                    var newMail = new ShareThingMail()
+                    {
+                        ShareId = newShare.Id,
+                        Time = DateTime.UtcNow,
+                        ToSharelinker = linker
+                    };
+                    newMails.Add(newMail);
+                }
             }
             shareService.InsertMails(newMails);
             Startup.PublishSubscriptionManager.PublishShareMessages(newMails);

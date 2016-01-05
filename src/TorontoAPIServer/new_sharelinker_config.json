@@ -1,19 +1,27 @@
 ﻿{
   "SharelinkCenter": {
-    "cn": "563c603cf274cd0797ae83e7",
-    "us": "563c60acf274cd0797ae83e9"
+    "centers": [
+      {
+        "region": "cn",
+        "id": "563c603cf274cd0797ae83e7"
+      },
+      {
+        "region": "us",
+        "id": "563c60acf274cd0797ae83e9"
+      }
+    ]
   },
 
   "InitShareThing": {
     "cn": {
       "shares":[
         {
-          "message": "欢迎来到Sharelink！在这里你可以建立各种主题，邀请你的好友一起关注共同的主题，然后在你们的共同主题分享信息吧！",
+          "message": "欢迎来到Sharelink！邀请你的好友一起建立共同的主题，然后在你们的共同主题分享吧！",
           "content": "",
           "contentType": "message:text"
         },
         {
-          "message": "好友最新关注的主题是公开的！每一个人都拥有自己的个人主题。关注个人主题，Ta分享的所有都能看到。",
+          "message": "好友最新关注的主题是公开的！每一个人都拥有自己的个人主题。关注Ta的个人主题，Ta分享的所有都能看到。",
           "content": "",
           "contentType": "message:text"
         },
