@@ -76,13 +76,14 @@ namespace TorontoAPIServer
             if (HostingEnvironment.IsDevelopment())
             {
                 builder.AddJsonFile("config_debug.json");
+                builder.AddJsonFile("new_sharelinker_config.json");
             }
             else
             {
                 builder.AddJsonFile("/etc/bahamut/toronto.json");
+                builder.AddJsonFile("/etc/bahamut/new_sharelinker_config.json");
             }
 
-            builder.AddJsonFile("new_sharelinker_config.json");
             builder.AddEnvironmentVariables();
             Configuration = builder.Build();
         }
@@ -94,8 +95,10 @@ namespace TorontoAPIServer
             var centers = Configuration.GetSection("SharelinkCenter:centers").GetChildren();
             foreach (var c in centers)
             {
-                SharelinkCenterList.Add(c["id"]);
-                SharelinkCenters[c["region"]] = c["id"];
+                var region = c["region"];
+                var id = c["id"];
+                SharelinkCenterList.Add(id);
+                SharelinkCenters[region] = id;
             }
         }
 

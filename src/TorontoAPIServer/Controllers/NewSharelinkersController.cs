@@ -18,7 +18,7 @@ namespace TorontoAPIServer.Controllers
     {
         // POST api/values
         [HttpPost]
-        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto,string region="cn")
+        public async Task<object> Post(string accountId, string accessToken, string nickName, string motto,string region="us")
         {
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
@@ -32,6 +32,7 @@ namespace TorontoAPIServer.Controllers
                     NoteName = nickName,
                     Motto = motto
                 };
+
                 var userService = this.UseSharelinkerService().GetSharelinkerService();
                 var user = await userService.CreateNewUser(newUser);
                 var newUserId = user.Id.ToString();
@@ -48,9 +49,9 @@ namespace TorontoAPIServer.Controllers
                 }
                 catch (Exception)
                 {
-                    centerId = Startup.SharelinkCenters["cn"];
+                    centerId = Startup.SharelinkCenters["us"];
                 }
-                    
+                
                 var centerOId = new ObjectId(centerId);
                 await userService.CreateNewLinkWithOtherUser(newUserId, centerId, new SharelinkerLink.State() { LinkState = (int)SharelinkerLink.LinkState.Linked }, SharelinkerConstants.SharelinkCenterNickName);
 
