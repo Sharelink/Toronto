@@ -69,7 +69,7 @@ namespace TorontoAPIServer.Controllers
                                        shareId = m.ShareId,
                                        chatId = m.ChatId,
                                        data = m.MessageData,
-                                       msg = m.Message,
+                                       msg = m.Message == null ? "reserved" : m.Message,
                                        time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
                                        msgType = m.MessageType
                                    };

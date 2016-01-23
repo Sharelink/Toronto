@@ -26,12 +26,12 @@
           "contentType": "message:text"
         },
         {
-          "message": "赶快邀请你的好友一起加入Sharelink吧！",
+          "message": "邀请你的好友一起加入Sharelink吧！",
           "content": "",
           "contentType": "message:text"
         },
         {
-          "message": "现在，开始你的Sharelink之旅吧！",
+          "message": "现在，开始体验吧！",
           "content": "{\"film\" : \"SharelinkFilm.mp4\"}",
           "contentType": "share:film"
         }
