@@ -41,6 +41,7 @@ namespace TorontoAPIServer
 
         public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
 
+        public static IList<string> HotThemes { get; set; }
         public static IHostingEnvironment HostingEnvironment { get; private set; }
         public static IApplicationEnvironment AppEnvironment { get; private set; }
 
@@ -50,6 +51,7 @@ namespace TorontoAPIServer
             HostingEnvironment = env;
             AppEnvironment = appEnv;
             ValidatedUsers = new Dictionary<string, string>();
+            HotThemes = new List<string>(1000);
             ReadConfig();
             SetServerConfig();
             InitSharelinkCenter();

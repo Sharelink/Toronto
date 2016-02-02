@@ -12,10 +12,19 @@ namespace TorontoAPIServer.Controllers
     public class SharelinkThemesController : TorontoAPIController
     {
         // GET: api/values
-        [HttpGet("Recommend")]
+        [HttpGet("HotThemes")]
         public IEnumerable<object> GetRecommendThemes(string region)
         {
-            return new string[] { "value1", "value2" };
+            var count = Startup.HotThemes.Count - 100;
+            if(count < 0)
+            {
+                count = 0;
+            }
+            var hotThemes = Startup.HotThemes.Skip(count);
+            yield return new
+            {
+                themes = hotThemes
+            };
         }
     }
 }
