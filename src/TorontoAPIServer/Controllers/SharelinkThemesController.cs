@@ -13,15 +13,15 @@ namespace TorontoAPIServer.Controllers
     {
         // GET: api/values
         [HttpGet("HotThemes")]
-        public IEnumerable<object> GetRecommendThemes(string region)
+        public object GetRecommendThemes(string region)
         {
             var count = Startup.HotThemes.Count - 100;
             if(count < 0)
             {
                 count = 0;
             }
-            var hotThemes = (from t in Startup.HotThemes select t).Skip(count).ToArray();
-            yield return new
+            var hotThemes = Startup.HotThemes.Skip(count).ToArray();
+            return new
             {
                 themes = hotThemes
             };
