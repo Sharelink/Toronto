@@ -20,7 +20,7 @@ namespace TorontoAPIServer.Controllers
             {
                 count = 0;
             }
-            var hotThemes = Startup.HotThemes.Skip(count);
+            var hotThemes = (from t in Startup.HotThemes select t).Skip(count).ToArray();
             yield return new
             {
                 themes = hotThemes
