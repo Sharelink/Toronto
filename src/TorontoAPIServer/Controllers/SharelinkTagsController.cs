@@ -61,13 +61,13 @@ namespace TorontoAPIServer.Controllers
                 CreateTime = DateTime.UtcNow,
                 ShowToLinkers = showToLinker
             };
-            if (Startup.HotThemes.Contains(tagName) == false)
-            {
-                Startup.HotThemes.Add(tagName);
-            }
             var r = await sharelinkTagService.CreateNewSharelinkTag(newTag);
             if (showToLinker && newTag.IsSharelinkerTag() == false)
             {
+                if (Startup.HotThemes.Contains(tagName) == false)
+                {
+                    Startup.HotThemes.Add(tagName);
+                }
                 await SendShowToLinkerTagMessage(shareService, userService, userId, r);
             }
             return SharelinkTagToResultObject(r.Id.ToString(),r);
