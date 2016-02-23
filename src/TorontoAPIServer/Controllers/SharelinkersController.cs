@@ -6,6 +6,7 @@ using Microsoft.AspNet.Mvc;
 using TorontoService;
 using TorontoModel.MongodbModel;
 using BahamutCommon;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -43,14 +44,23 @@ namespace TorontoAPIServer.Controllers
         {
             var userService = this.UseSharelinkerService().GetSharelinkerService();
             var user = await userService.GetUserOfAccountId(accountId);
-            return new
+            if (user == null)
             {
-                userId = user.Id.ToString(),
-                nickName = user.NickName,
-                avatarId = user.Avatar,
-                noteName = user.NoteName,
-                motto = user.Motto
-            };
+                Response.StatusCode = (int)HttpStatusCode.NotFound;
+                return "No Such Account";
+            }
+            else
+            {
+                return new
+                {
+                    userId = user.Id.ToString(),
+                    nickName = user.NickName,
+                    avatarId = user.Avatar,
+                    noteName = user.NoteName,
+                    motto = user.Motto
+                };
+            }
+            
         }
 
         private int CaculateLevel(int point)
