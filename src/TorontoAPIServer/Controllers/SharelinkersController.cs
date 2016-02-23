@@ -38,6 +38,21 @@ namespace TorontoAPIServer.Controllers
             return result.ToArray();
         }
 
+        [HttpGet("{accountId}")]
+        public async Task<object> GetUserByAccountId(string accountId)
+        {
+            var userService = this.UseSharelinkerService().GetSharelinkerService();
+            var user = await userService.GetUserOfAccountId(accountId);
+            return new
+            {
+                userId = user.Id.ToString(),
+                nickName = user.NickName,
+                avatarId = user.Avatar,
+                noteName = user.NoteName,
+                motto = user.Motto
+            };
+        }
+
         private int CaculateLevel(int point)
         {
             if (point < 49)
