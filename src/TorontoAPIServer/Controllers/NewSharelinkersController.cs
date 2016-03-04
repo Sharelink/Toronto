@@ -20,6 +20,13 @@ namespace TorontoAPIServer.Controllers
         [HttpPost]
         public async Task<object> Post(string accountId, string accessToken, string nickName, string motto,string region="us")
         {
+            var userService = this.UseSharelinkerService().GetSharelinkerService();
+            var test = await userService.GetUserOfAccountId(accountId);
+            if (test != null)
+            {
+                Response.StatusCode = (int)HttpStatusCode.Forbidden;
+                return "One AccountId Only Regist One Time";
+            }
             var tokenService = Startup.ServicesProvider.GetTokenService();
             var userSession = await tokenService.ValidateToGetSessionData(Startup.Appkey, accountId, accessToken);
             if (userSession != null)
@@ -33,7 +40,7 @@ namespace TorontoAPIServer.Controllers
                     Motto = motto
                 };
 
-                var userService = this.UseSharelinkerService().GetSharelinkerService();
+                
                 var user = await userService.CreateNewUser(newUser);
                 var newUserId = user.Id.ToString();
 
