@@ -9,9 +9,6 @@
     "SharelinkDBServer": {
       "url": "mongodb://$usr:$psw@db.sharelink.online:27017"
     },
-    "BahamutDBConnection": {
-      "connectionString": "server=bahamutdb.sharelink.online;user id=$usr;password=$psw;Charset=utf8;persistsecurityinfo=False;database=BahamutDB;Pooling=true; Max Pool Size=50;"
-    },
     "TokenServer": {
       "url": "redis://$psw@token.sharelink.online:6379"
     },
@@ -26,6 +23,10 @@
 
     "MessageCacheServer": {
       "url": "redis://$psw@msg.sharelink.online:6379"
+    },
+
+    "AuthServer": {
+      "url": "http://auth.bahamut.cn:8086"
     },
 
     "ChicagoServer": {

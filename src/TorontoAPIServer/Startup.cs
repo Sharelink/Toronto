@@ -22,28 +22,29 @@ namespace TorontoAPIServer
 {
     public class Startup
     {
-        public static IConfiguration Configuration { get; set; }
-        public static IServiceProvider ServicesProvider { get; private set; }
-        public static string Appkey { get; private set; }
-        public static string Appname { get; private set; }
-        public static string Server { get; set; }
-        public static string APIUrl { get; private set; }
-        public static string FileApiUrl { get; private set; }
-        public static string SharelinkDBUrl { get; private set; }
-        public static string BahamutDBConnectionString { get; private set; }
-        public static BahamutAppInstance BahamutAppInstance { get; private set; }
-        public static string ChicagoServerAddress { get; private set; }
-        public static int ChicagoServerPort { get; private set; }
-        public static IDictionary<string, string> ValidatedUsers { get; private set; }
-
-        public static IList<string> SharelinkCenterList { get; private set; }
-        public static IDictionary<string,string> SharelinkCenters { get; private set; }
-
-        public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
-
-        public static IList<string> HotThemes { get; set; }
         public static IHostingEnvironment HostingEnvironment { get; private set; }
         public static IApplicationEnvironment AppEnvironment { get; private set; }
+        public static IConfiguration Configuration { get; set; }
+        public static IServiceProvider ServicesProvider { get; private set; }
+
+        public static BahamutAppInstance BahamutAppInstance { get; private set; }
+        public static string Server { get; private set; }
+        public static string Appkey { get; private set; }
+        public static string Appname { get; private set; }
+        public static string APIUrl { get; private set; }
+
+        public static string AuthServerUrl { get { return Configuration["Data:AuthServer:url"]; } }
+        public static string FileApiUrl { get { return Configuration["Data:FileServer:url"]; } }
+        public static string SharelinkDBUrl { get { return Configuration["Data:SharelinkDBServer:url"]; } }
+        public static string ChicagoServerAddress { get { return Configuration["Data:ChicagoServer:host"]; } }
+        public static int ChicagoServerPort { get { return int.Parse(Configuration["Data:ChicagoServer:port"]); } }
+
+        public static IDictionary<string, string> ValidatedUsers { get; private set; }
+        public static IList<string> SharelinkCenterList { get; private set; }
+        public static IDictionary<string,string> SharelinkCenters { get; private set; }
+        public static IList<string> HotThemes { get; set; }
+
+        public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
 
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
@@ -59,16 +60,10 @@ namespace TorontoAPIServer
 
         private static void SetServerConfig()
         {
-            BahamutDBConnectionString = Configuration["Data:BahamutDBConnection:connectionString"];
-            FileApiUrl = Configuration["Data:FileServer:url"];
             Server = Configuration["Data:App:url"];
-            ChicagoServerAddress = Configuration["Data:ChicagoServer:host"];
-            ChicagoServerPort = int.Parse(Configuration["Data:ChicagoServer:port"]);
-
             Appkey = Configuration["Data:App:appkey"];
             Appname = Configuration["Data:App:appname"];
             APIUrl = Server + "/api";
-            SharelinkDBUrl = Configuration["Data:SharelinkDBServer:url"];
         }
 
         private static void ReadConfig()
@@ -119,7 +114,6 @@ namespace TorontoAPIServer
             var ControlServerServiceClientManager = new PooledRedisClientManager(serverControlUrl);
             services.AddInstance(new ServerControlManagementService(ControlServerServiceClientManager));
             services.AddInstance(new TokenService(TokenServerClientManager));
-            services.AddInstance(new BahamutAccountService(BahamutDBConnectionString));
 
             var pubsubServerUrl = Configuration["Data:MessagePubSubServer:url"].Replace("redis://", "");
             var pbClientManager = new PooledRedisClientManager(pubsubServerUrl);
@@ -200,11 +194,6 @@ namespace TorontoAPIServer
 
     public static class IGetBahamutServiceExtension
     {
-
-        public static BahamutAccountService GetAccountService(this IServiceProvider provider)
-        {
-            return provider.GetService<BahamutAccountService>();
-        }
 
         public static ServerControlManagementService GetServerControlManagementService(this IServiceProvider provider)
         {
