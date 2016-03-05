@@ -135,31 +135,23 @@ namespace TorontoAPIServer.Controllers
         }
 
         [HttpGet("Updated")]
-        public object[] GetNewShareThingUpdatedMessages()
+        public async Task<object[]> GetNewShareThingUpdatedMessages()
         {
-            using (var msgClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-            {
-                var msgList = msgClient.As<ShareThingUpdatedMessage>().Lists[UserSessionData.UserId];
-                var msgs = msgList.GetAll();
-                var result = from m in msgs
-                             select new
-                             {
-                                 shareId = m.ShareId.ToString(),
-                                 time = DateTimeUtil.ToString(m.Time)
-                             };
-                return result.ToArray();
-            }
+            var nmsgs = await Startup.ServicesProvider.GetBahamutPubSubService().GetBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ShareThingUpdatedMessage.NotifyType);
+            var msgs = from nm in nmsgs select JsonConvert.DeserializeObject<ShareThingUpdatedMessage>(nm.DeserializableMessage);
+            var result = from m in msgs
+                         select new
+                         {
+                             shareId = m.ShareId.ToString(),
+                             time = DateTimeUtil.ToString(m.Time)
+                         };
+            return result.ToArray();
         }
 
         [HttpDelete("Updated")]
         public void DeleteNewShareThingUpdatedMessages()
         {
-            using (var msgClient = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-            {
-                var client = msgClient.As<ShareThingUpdatedMessage>();
-                var msgList = client.Lists[UserSessionData.UserId];
-                client.RemoveAllFromList(msgList);
-            }
+            Startup.ServicesProvider.GetBahamutPubSubService().ClearBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ShareThingUpdatedMessage.NotifyType);
         }
 
         [HttpPost("Reshare/{pShareId}")]
@@ -301,8 +293,7 @@ namespace TorontoAPIServer.Controllers
                 await MatchLinkerTags(tagService, newShare, mails, newShareTags);
             }
             service.InsertMails(mails);
-
-            Startup.PublishSubscriptionManager.PublishShareMessages(mails);
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishShareMessages(mails);
             return new { message = "ok" };
         }
 

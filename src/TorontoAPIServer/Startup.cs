@@ -17,6 +17,7 @@ using System.Net;
 using System.Linq;
 using NLog.Targets;
 using NLog.Config;
+using BahamutService.Service;
 
 namespace TorontoAPIServer
 {
@@ -43,8 +44,6 @@ namespace TorontoAPIServer
         public static IList<string> SharelinkCenterList { get; private set; }
         public static IDictionary<string,string> SharelinkCenters { get; private set; }
         public static IList<string> HotThemes { get; set; }
-
-        public static PublishSubscriptionManager PublishSubscriptionManager { get; private set; }
 
         public Startup(IHostingEnvironment env, IApplicationEnvironment appEnv)
         {
@@ -120,7 +119,10 @@ namespace TorontoAPIServer
 
             var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
             var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
-            PublishSubscriptionManager = new PublishSubscriptionManager(pbClientManager,mcClientManager);
+
+            var pbService = new BahamutPubSubService(pbClientManager, mcClientManager);
+            services.AddInstance(pbService);
+            
         }
 
         // Configure is called after ConfigureServices is called.
@@ -194,6 +196,11 @@ namespace TorontoAPIServer
 
     public static class IGetBahamutServiceExtension
     {
+
+        public static BahamutPubSubService GetBahamutPubSubService(this IServiceProvider provider)
+        {
+            return provider.GetService<BahamutPubSubService>();
+        }
 
         public static ServerControlManagementService GetServerControlManagementService(this IServiceProvider provider)
         {

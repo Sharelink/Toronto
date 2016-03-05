@@ -34,6 +34,8 @@ namespace TorontoService
             Client = client;
         }
 
+        
+
         public async Task<ShareChat> GetOrCreateChat(string chatId, string userId, string shareId,  string audienceId)
         {
             
@@ -57,6 +59,11 @@ namespace TorontoService
             
         }
 
+        public async Task<IEnumerable<ChatMessage>> GetMessagesWithIds(IEnumerable<ObjectId> msgIds)
+        {
+            var result = await MessageCollection.Find(msg => msgIds.Contains(msg.Id)).ToListAsync();
+            return result;
+        }
 
         public async Task<IList<ChatMessage>> GetMessage(string userId,string chatId,string newerThanTime,bool includeOwnMessage = false)
         {

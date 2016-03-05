@@ -24,10 +24,10 @@ namespace TorontoAPIServer.Controllers
             var share = await shareService.VoteShare(UserSessionData.UserId, shareId);
             var updateMsg = new ShareThingUpdatedMessage()
             {
-                ShareId = share.Id,
+                ShareId = share.Id.ToString(),
                 Time = DateTime.UtcNow
             };
-            Startup.PublishSubscriptionManager.PublishShareUpdatedMessages(share.UserId.ToString(), updateMsg);
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishShareUpdatedMessages(share.UserId.ToString(), updateMsg);
         }
 
         //DELETE /Votes/{shareId} : vote sharething of shareId

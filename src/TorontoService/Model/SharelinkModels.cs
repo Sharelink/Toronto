@@ -94,7 +94,8 @@ namespace TorontoModel.MongodbModel
 
     public class ShareThingUpdatedMessage
     {
-        public ObjectId ShareId { get; set; }
+        public const string NotifyType = "ShareThingMessage";
+        public string ShareId { get; set; }
         public DateTime Time { get; set; }
     }
 
@@ -116,6 +117,7 @@ namespace TorontoModel.MongodbModel
 
     public class LinkMessage
     {
+        public const string NotifyType = "LinkMessage";
         public string Id { get; set; }
         public string SharelinkerId { get; set; }
         public string SharelinkerNick { get; set; }
@@ -153,6 +155,7 @@ namespace TorontoModel.MongodbModel
 
     public class ChatMessage
     {
+        public const string NotifyType = "ChatMessage";
         public ObjectId Id { get; set; }
         public ObjectId SenderId { get; set; }
         public string ChatId { get; set; }

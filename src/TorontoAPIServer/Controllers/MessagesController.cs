@@ -39,43 +39,31 @@ namespace TorontoAPIServer.Controllers
         }
 
         [HttpDelete("New")]
-        public async Task DeleteNewMessages()
+        public void DeleteNewMessages()
         {
-            await Task.Run(() =>
-            {
-                using (var msc = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-                {
-                    var client = msc.As<ChatMessage>();
-                    var list = client.Lists[UserSessionData.UserId];
-                    client.RemoveAllFromList(list);
-                }
-            });
+            Startup.ServicesProvider.GetBahamutPubSubService().ClearBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ChatMessage.NotifyType);
         }
 
         [HttpGet("New")]
         public async Task<object[]> GetNewMessage()
         {
-            return await Task.Run(() =>
-            {
-                using (var msc = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-                {
-                    var list = msc.As<ChatMessage>().Lists[UserSessionData.UserId];
-                    var msgList = msc.As<ChatMessage>().GetAllItemsFromList(list);
-                    var messages = from m in msgList
-                                   select new
-                                   {
-                                       msgId = m.Id.ToString(),
-                                       senderId = m.SenderId.ToString(),
-                                       shareId = m.ShareId,
-                                       chatId = m.ChatId,
-                                       data = m.MessageData,
-                                       msg = m.Message == null ? "reserved" : m.Message,
-                                       time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
-                                       msgType = m.MessageType
-                                   };
-                    return messages.ToArray();
-                }
-            });
+            var messageService = this.UseMessageService().GetMessageService();
+            var msgs = await Startup.ServicesProvider.GetBahamutPubSubService().GetBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ChatMessage.NotifyType);
+            var msgIds = from m in msgs select new ObjectId(m.DeserializableMessage);
+            var msgList = await messageService.GetMessagesWithIds(msgIds);
+            var messages = from m in msgList
+                           select new
+                           {
+                               msgId = m.Id.ToString(),
+                               senderId = m.SenderId.ToString(),
+                               shareId = m.ShareId,
+                               chatId = m.ChatId,
+                               data = m.MessageData,
+                               msg = m.Message == null ? "reserved" : m.Message,
+                               time = DateTimeUtil.ToAccurateDateTimeString(m.Time),
+                               msgType = m.MessageType
+                           };
+            return messages.ToArray();
         }
 
         // POST api/values
@@ -97,7 +85,7 @@ namespace TorontoAPIServer.Controllers
             var sendUserOId = new ObjectId(UserSessionData.UserId);
             var chat = await messageService.GetOrCreateChat(chatId, UserSessionData.UserId, shareId, audienceId);
             msg = await messageService.NewMessage(msg);
-            Startup.PublishSubscriptionManager.PublishChatMessages(sendUserOId, chat, msg);
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishChatMessages(sendUserOId, chat, msg);
             return new
             {
                 msgId = msg.Id.ToString()

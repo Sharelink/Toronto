@@ -77,7 +77,8 @@ namespace TorontoAPIServer.Controllers
                 SharelinkerNick = me.NickName,
                 Time = DateTime.UtcNow
             };
-            Startup.PublishSubscriptionManager.PublishLinkMessages(sharelinkerId, linkreq);
+
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishLinkMessages(sharelinkerId, linkreq);
 
             var u = await service.GetUserOfUserId(sharelinkerId);
             var newLink = new
@@ -107,42 +108,29 @@ namespace TorontoAPIServer.Controllers
         }
 
         [HttpDelete("LinkMessages")]
-        public async Task<bool> DeleteLinkMessages()
+        public bool DeleteLinkMessages()
         {
-            return await Task.Run(() =>
-            {
-                using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-                {
-                    var client = messageCache.As<LinkMessage>();
-                    var list = client.Lists[UserSessionData.UserId];
-                    client.RemoveAllFromList(list);
-                }
-                return true;
-            });
+            Startup.ServicesProvider.GetBahamutPubSubService().ClearBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, LinkMessage.NotifyType);
+            return true;
         }
 
         [HttpGet("LinkMessages")]
         public async Task<object[]> GetLinkMessages()
         {
-            return await Task.Run(() =>
-            {
-                using (var messageCache = Startup.PublishSubscriptionManager.MessageCacheClientManager.GetClient())
-                {
-                    var msgs = messageCache.As<LinkMessage>().Lists[UserSessionData.UserId].GetAll().ToArray();
-                    var results =  from m in msgs
-                           select new
-                           {
-                               id = m.Id,
-                               sharelinkerId = m.SharelinkerId,
-                               sharelinkerNick = m.SharelinkerNick,
-                               type = m.Type,
-                               message = m.Message,
-                               avatar = m.Avatar,
-                               time = DateTimeUtil.ToString(m.Time)
-                           };
-                    return results.ToArray();
-                }
-            });
+            var nmsgs = await Startup.ServicesProvider.GetBahamutPubSubService().GetBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, LinkMessage.NotifyType);
+            var msgs = from nm in nmsgs select JsonConvert.DeserializeObject<LinkMessage>(nm.DeserializableMessage);
+            var results = from m in msgs
+                          select new
+                          {
+                              id = m.Id,
+                              sharelinkerId = m.SharelinkerId,
+                              sharelinkerNick = m.SharelinkerNick,
+                              type = m.Type,
+                              message = m.Message,
+                              avatar = m.Avatar,
+                              time = DateTimeUtil.ToString(m.Time)
+                          };
+            return results.ToArray();
         }
 
         //POST /UserLinks (otherUserId,msg) : add new link with other user
@@ -163,7 +151,7 @@ namespace TorontoAPIServer.Controllers
                 Avatar = user.Avatar,
                 Time = DateTime.UtcNow
             };
-            Startup.PublishSubscriptionManager.PublishLinkMessages(otherUserId, linkmsg);
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishLinkMessages(otherUserId, linkmsg);
             return true;
         }
     }

@@ -1,4 +1,7 @@
-﻿using MongoDB.Bson;
+﻿using BahamutCommon;
+using BahamutService.Service;
+using MongoDB.Bson;
+using Newtonsoft.Json;
 using ServiceStack.Redis;
 using System;
 using System.Collections.Generic;
@@ -8,83 +11,66 @@ using TorontoModel.MongodbModel;
 
 namespace TorontoAPIServer
 {
-    public class PublishSubscriptionManager
+
+
+    public static class TorontoPublishSubscriptionServiceExtension
     {
-        private IRedisClientsManager mcClientManager;
-        private IRedisClientsManager psClientManager { get; set; }
-        public IRedisClientsManager MessageCacheClientManager { get { return mcClientManager; } }
 
-        public PublishSubscriptionManager(IRedisClientsManager psClientManager, IRedisClientsManager mcClientManager)
+        public static void PublishShareMessages(this BahamutPubSubService service, List<ShareThingMail> mails)
         {
-            this.mcClientManager = mcClientManager;
-            this.psClientManager = psClientManager;
+            foreach (var m in mails)
+            {
+                var smsg = new ShareThingUpdatedMessage()
+                {
+                    ShareId = m.ShareId.ToString(),
+                    Time = DateTime.UtcNow
+                };
+                var msg = new BahamutUserAppNotifyMessage()
+                {
+                    DeserializableMessage = JsonConvert.SerializeObject(smsg),
+                    NotificationType = ShareThingUpdatedMessage.NotifyType
+                };
+                var sharelinker = m.ToSharelinker.ToString();
+                service.PublishBahamutUserNotifyMessage(Startup.Appname, sharelinker, msg);
+            }
         }
 
-        public void PublishShareMessages(List<ShareThingMail> mails)
+        public static void PublishShareUpdatedMessages(this BahamutPubSubService service, string userId, ShareThingUpdatedMessage updateMsg)
         {
-            using (var psClient = psClientManager.GetClient())
+            var msg = new BahamutUserAppNotifyMessage()
             {
-                using (var msgClient = mcClientManager.GetClient())
+                DeserializableMessage = JsonConvert.SerializeObject(updateMsg),
+                NotificationType = ShareThingUpdatedMessage.NotifyType
+            };
+            service.PublishBahamutUserNotifyMessage(Startup.Appname, userId, msg);
+        }
+
+        public static void PublishChatMessages(this BahamutPubSubService service, ObjectId senderId, ShareChat chat, ChatMessage msg)
+        {
+            foreach (var user in chat.UserIds)
+            {
+                if (user != senderId)
                 {
-                    foreach (var m in mails)
+                    var nmsg = new BahamutUserAppNotifyMessage()
                     {
-                        var sharelinker = m.ToSharelinker.ToString();
-                        msgClient.As<ShareThingUpdatedMessage>().Lists[sharelinker].Add(
-                        new ShareThingUpdatedMessage()
-                        {
-                            ShareId = m.ShareId,
-                            Time = DateTime.UtcNow
-                        });
-                        psClient.PublishMessage(sharelinker, string.Format("ShareThingMessage:{0}", m.ShareId.ToString()));
-                    }
-
+                        ExtraInfo = chat.Id.ToString(),
+                        DeserializableMessage = msg.Id.ToString(),
+                        NotificationType = ChatMessage.NotifyType
+                    };
+                    var idstr = user.ToString();
+                    service.PublishBahamutUserNotifyMessage(Startup.Appname, idstr, nmsg);
                 }
             }
         }
 
-        public void PublishShareUpdatedMessages(string userId, ShareThingUpdatedMessage updateMsg)
+        public static void PublishLinkMessages(this BahamutPubSubService service, string toSharelinkerId, LinkMessage linkMessage)
         {
-            using (var psClient = psClientManager.GetClient())
+            var msg = new BahamutUserAppNotifyMessage()
             {
-                using (var msgClient = mcClientManager.GetClient())
-                {
-                    msgClient.As<ShareThingUpdatedMessage>().Lists[userId].Add(
-                        updateMsg);
-                }
-                psClient.PublishMessage(userId, string.Format("ShareThingMessage:{0}", updateMsg.ShareId.ToString()));
-            }
-        }
-
-        public void PublishChatMessages(ObjectId senderId, ShareChat chat, ChatMessage msg)
-        {
-            using (var psClient = psClientManager.GetClient())
-            {
-                using (var msc = mcClientManager.GetClient())
-                {
-                    foreach (var user in chat.UserIds)
-                    {
-                        if (user != senderId)
-                        {
-                            var idstr = user.ToString();
-                            msc.As<ChatMessage>().Lists[idstr].Add(msg);
-                            psClient.PublishMessage(idstr, "ChatMessage:" + chat.ChatId);
-                        }
-                    }
-                }
-
-            }
-        }
-
-        public void PublishLinkMessages(string toSharelinkerId, LinkMessage linkMessage)
-        {
-            using (var psClient = psClientManager.GetClient())
-            {
-                using (var messageCache = mcClientManager.GetClient())
-                {
-                    messageCache.As<LinkMessage>().Lists[toSharelinkerId].Add(linkMessage);
-                }
-                psClient.PublishMessage(toSharelinkerId, "LinkMessage:" + "new");
-            }
+                DeserializableMessage = JsonConvert.SerializeObject(linkMessage),
+                NotificationType = LinkMessage.NotifyType
+            };
+            service.PublishBahamutUserNotifyMessage(Startup.Appname, toSharelinkerId, msg);
         }
     }
 }

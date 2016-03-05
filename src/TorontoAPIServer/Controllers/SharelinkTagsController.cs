@@ -118,7 +118,8 @@ namespace TorontoAPIServer.Controllers
                 }
             }
             shareService.InsertMails(newMails);
-            Startup.PublishSubscriptionManager.PublishShareMessages(newMails);
+
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishShareMessages(newMails);
         }
 
         // PUT /SharelinkTags/{tagId}: update tag property
