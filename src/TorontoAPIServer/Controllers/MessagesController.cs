@@ -41,15 +41,15 @@ namespace TorontoAPIServer.Controllers
         [HttpDelete("New")]
         public void DeleteNewMessages()
         {
-            Startup.ServicesProvider.GetBahamutPubSubService().ClearBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ChatMessage.NotifyType);
+            Startup.ServicesProvider.GetBahamutCacheService().ClearCacheModels(Startup.Appname, ChatMessage.NotifyType, UserSessionData.UserId);
         }
 
         [HttpGet("New")]
         public async Task<object[]> GetNewMessage()
         {
             var messageService = this.UseMessageService().GetMessageService();
-            var msgs = await Startup.ServicesProvider.GetBahamutPubSubService().GetBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ChatMessage.NotifyType);
-            var msgIds = from m in msgs select new ObjectId(m.DeserializableMessage);
+            var msgs = await Startup.ServicesProvider.GetBahamutCacheService().GetCacheModels(Startup.Appname, ChatMessage.NotifyType, UserSessionData.UserId);
+            var msgIds = from m in msgs select new ObjectId(m.DeserializableString);
             var msgList = await messageService.GetMessagesWithIds(msgIds);
             var messages = from m in msgList
                            select new

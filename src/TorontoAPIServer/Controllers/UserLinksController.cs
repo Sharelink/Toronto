@@ -110,15 +110,15 @@ namespace TorontoAPIServer.Controllers
         [HttpDelete("LinkMessages")]
         public bool DeleteLinkMessages()
         {
-            Startup.ServicesProvider.GetBahamutPubSubService().ClearBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, LinkMessage.NotifyType);
+            Startup.ServicesProvider.GetBahamutCacheService().ClearCacheModels(Startup.Appname, LinkMessage.NotifyType, UserSessionData.UserId);
             return true;
         }
 
         [HttpGet("LinkMessages")]
         public async Task<object[]> GetLinkMessages()
         {
-            var nmsgs = await Startup.ServicesProvider.GetBahamutPubSubService().GetBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, LinkMessage.NotifyType);
-            var msgs = from nm in nmsgs select JsonConvert.DeserializeObject<LinkMessage>(nm.DeserializableMessage);
+            var nmsgs = await Startup.ServicesProvider.GetBahamutCacheService().GetCacheModels(Startup.Appname, LinkMessage.NotifyType, UserSessionData.UserId);
+            var msgs = from nm in nmsgs select JsonConvert.DeserializeObject<LinkMessage>(nm.DeserializableString);
             var results = from m in msgs
                           select new
                           {

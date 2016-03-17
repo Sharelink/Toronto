@@ -119,8 +119,10 @@ namespace TorontoAPIServer
 
             var messageCacheServerUrl = Configuration["Data:MessageCacheServer:url"].Replace("redis://", "");
             var mcClientManager = new PooledRedisClientManager(messageCacheServerUrl);
+            var bcService = new BahamutCacheService(mcClientManager);
+            services.AddInstance(bcService);
 
-            var pbService = new BahamutPubSubService(pbClientManager, mcClientManager);
+            var pbService = new BahamutPubSubService(pbClientManager);
             services.AddInstance(pbService);
             
         }
@@ -196,6 +198,11 @@ namespace TorontoAPIServer
 
     public static class IGetBahamutServiceExtension
     {
+
+        public static BahamutCacheService GetBahamutCacheService(this IServiceProvider provider)
+        {
+            return provider.GetService<BahamutCacheService>();
+        }
 
         public static BahamutPubSubService GetBahamutPubSubService(this IServiceProvider provider)
         {

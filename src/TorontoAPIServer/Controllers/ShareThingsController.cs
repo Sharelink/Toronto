@@ -137,8 +137,8 @@ namespace TorontoAPIServer.Controllers
         [HttpGet("Updated")]
         public async Task<object[]> GetNewShareThingUpdatedMessages()
         {
-            var nmsgs = await Startup.ServicesProvider.GetBahamutPubSubService().GetBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ShareThingUpdatedMessage.NotifyType);
-            var msgs = from nm in nmsgs select JsonConvert.DeserializeObject<ShareThingUpdatedMessage>(nm.DeserializableMessage);
+            var nmsgs = await Startup.ServicesProvider.GetBahamutCacheService().GetCacheModels(Startup.Appname, ShareThingUpdatedMessage.NotifyType, UserSessionData.UserId);
+            var msgs = from nm in nmsgs select JsonConvert.DeserializeObject<ShareThingUpdatedMessage>(nm.DeserializableString);
             var result = from m in msgs
                          select new
                          {
@@ -151,7 +151,7 @@ namespace TorontoAPIServer.Controllers
         [HttpDelete("Updated")]
         public void DeleteNewShareThingUpdatedMessages()
         {
-            Startup.ServicesProvider.GetBahamutPubSubService().ClearBahamutUserNotifyMessages(Startup.Appname, UserSessionData.UserId, ShareThingUpdatedMessage.NotifyType);
+            Startup.ServicesProvider.GetBahamutCacheService().ClearCacheModels(Startup.Appname, ShareThingUpdatedMessage.NotifyType, UserSessionData.UserId);
         }
 
         [HttpPost("Reshare/{pShareId}")]
