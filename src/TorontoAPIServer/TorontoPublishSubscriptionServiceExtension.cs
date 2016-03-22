@@ -12,9 +12,12 @@ using TorontoModel.MongodbModel;
 namespace TorontoAPIServer
 {
 
+    public class PublishConstants
+    {
+        public const string NotifyId = "Toronto";
+    }
     public static class TorontoPublishSubscriptionServiceExtension
     {
-
         public static void PublishShareMessages(this BahamutPubSubService service, List<ShareThingMail> mails)
         {
             foreach (var m in mails)
@@ -41,10 +44,11 @@ namespace TorontoAPIServer
             Startup.ServicesProvider.GetBahamutCacheService().PushCacheModelToList(cacheModel);
             var pbModel = new BahamutPublishModel
             {
-                NotifyType = ShareThingUpdatedMessage.NotifyType,
-                ToUser = userId
+                NotifyType = "UsrNewSTMsg",
+                ToUser = userId,
+                Info = "NEW_SHARE_NOTIFICATION"
             };
-            Startup.ServicesProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(Startup.Appname, pbModel);
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(PublishConstants.NotifyId, pbModel);
             
         }
 
@@ -68,11 +72,11 @@ namespace TorontoAPIServer
                     Startup.ServicesProvider.GetBahamutCacheService().PushCacheModelToList(cacheModel);
                     var pbModel = new BahamutPublishModel
                     {
-                        NotifyType = ChatMessage.NotifyType,
+                        NotifyType = "UsrNewMsg",
                         ToUser = idstr,
-                        Info = chat.Id.ToString()
+                        Info = "NEW_MSG_NOTIFICATION"
                     };
-                    Startup.ServicesProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(Startup.Appname, pbModel);
+                    Startup.ServicesProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(PublishConstants.NotifyId, pbModel);
                 }
             }
         }
@@ -91,10 +95,11 @@ namespace TorontoAPIServer
             Startup.ServicesProvider.GetBahamutCacheService().PushCacheModelToList(cacheModel);
             var pbModel = new BahamutPublishModel
             {
-                NotifyType = LinkMessage.NotifyType,
-                ToUser = toSharelinkerId
+                NotifyType = "UsrNewLinkMsg",
+                ToUser = toSharelinkerId,
+                Info = "NEW_FRI_MSG_NOTIFICATION"
             };
-            Startup.ServicesProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(Startup.Appname, pbModel);
+            Startup.ServicesProvider.GetBahamutPubSubService().PublishBahamutUserNotifyMessage(PublishConstants.NotifyId, pbModel);
         }
     }
 }
