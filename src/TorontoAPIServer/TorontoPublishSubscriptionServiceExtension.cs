@@ -44,6 +44,7 @@ namespace TorontoAPIServer
             Startup.ServicesProvider.GetBahamutCacheService().PushCacheModelToList(cacheModel);
             var pbModel = new BahamutPublishModel
             {
+                NotifyType = "Toronto",
                 ToUser = userId,
                 CustomCmd = "UsrNewSTMsg",
                 NotifyInfo = JsonConvert.SerializeObject(new { LocKey = "NEW_SHARE_NOTIFICATION" })
@@ -72,6 +73,7 @@ namespace TorontoAPIServer
                     Startup.ServicesProvider.GetBahamutCacheService().PushCacheModelToList(cacheModel);
                     var pbModel = new BahamutPublishModel
                     {
+                        NotifyType = "Toronto",
                         ToUser = idstr,
                         CustomCmd = "UsrNewMsg",
                         NotifyInfo = JsonConvert.SerializeObject(new { LocKey = "NEW_MSG_NOTIFICATION" })
@@ -95,6 +97,7 @@ namespace TorontoAPIServer
             Startup.ServicesProvider.GetBahamutCacheService().PushCacheModelToList(cacheModel);
             var pbModel = new BahamutPublishModel
             {
+                NotifyType = "Toronto",
                 ToUser = toSharelinkerId,
                 CustomCmd = "UsrNewLinkMsg",
                 NotifyInfo = JsonConvert.SerializeObject(new { LocKey = "NEW_FRI_MSG_NOTIFICATION" })
