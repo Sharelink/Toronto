@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TorontoService;
 using System.Net;
 using BahamutService;
@@ -34,7 +34,7 @@ namespace TorontoAPIServer.Controllers
                         LogInfo("Account:{0} Registing", accountId);
                         return new
                         {
-                            RegistAPIServer = Startup.Server
+                            registAPIServer = Startup.Server
                         };
                     }
                     LogManager.GetLogger("Warning").Warn("Validate Failed:Account:{0} Token:{1} Appkey:{2}", appkey, accountId, accessToken);
@@ -48,11 +48,11 @@ namespace TorontoAPIServer.Controllers
                     Startup.ValidatedUsers[userId] = tokenResult.UserSessionData.AppToken;
                     return new
                     {
-                        AppToken = tokenResult.UserSessionData.AppToken,
-                        UserId = userId,
-                        APIServer = Startup.APIUrl,
-                        FileAPIServer = Startup.FileApiUrl,
-                        ChicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
+                        appToken = tokenResult.UserSessionData.AppToken,
+                        userId = userId,
+                        apiServer = Startup.APIUrl,
+                        fileAPIServer = Startup.FileApiUrl,
+                        chicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
                     };
                 }
                 else

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using BahamutService.Model;
 using TorontoService;
 using TorontoModel.MongodbModel;
@@ -91,12 +91,12 @@ namespace TorontoAPIServer.Controllers
                 var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, newUser.Id.ToString());
                 return new
                 {
-                    Succeed = true,
-                    AppToken = sessionData.UserSessionData.AppToken,
-                    UserId = sessionData.UserSessionData.UserId,
-                    APIServer = Startup.APIUrl,
-                    FileAPIServer = Startup.FileApiUrl,
-                    ChicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
+                    succeed = true,
+                    appToken = sessionData.UserSessionData.AppToken,
+                    userId = sessionData.UserSessionData.UserId,
+                    apiServer = Startup.APIUrl,
+                    fileAPIServer = Startup.FileApiUrl,
+                    chicagoServer = string.Format("{0}:{1}", Startup.ChicagoServerAddress, Startup.ChicagoServerPort)
                 };
             }
             else

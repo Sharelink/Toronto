@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TorontoService;
 using BahamutCommon;
 using TorontoModel.MongodbModel;
 using MongoDB.Bson;
-using ServiceStack.Redis;
-using ServiceStack.Redis.Generic;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 

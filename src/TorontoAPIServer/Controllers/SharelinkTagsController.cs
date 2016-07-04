@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNet.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using TorontoService;
 using TorontoModel.MongodbModel;
 using System.Net;
@@ -27,7 +27,7 @@ namespace TorontoAPIServer.Controllers
                 var tags = await sharelinkTagService.GetUserSharelinkTags(UserSessionData.UserId);
                 var result = from t in tags
                              select SharelinkTagToResultObject(
-                                 t.IsSystemTag() ? PasswordHash.Encrypt.MD5(string.Format("{0}{1}{2}", t.TagDomain, t.TagType, t.Data)) : t.Id.ToString(),
+                                 t.IsSystemTag() ? EasyEncryption.MD5.ComputeMD5Hash(string.Format("{0}{1}{2}", t.TagDomain, t.TagType, t.Data)) : t.Id.ToString(),
                                  t);
                 return result.ToArray();
             }

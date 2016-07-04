@@ -4,34 +4,40 @@
 
   "dependencies": {
     "BahamutAspNetCommon": "1.0.0-*",
-    "Microsoft.AspNet.Mvc": "6.0.0-*",
-    "Microsoft.AspNet.Server.Kestrel": "1.0.0-*",
-    "Microsoft.AspNet.StaticFiles": "1.0.0-*",
-    "Microsoft.Extensions.Configuration.Json": "1.0.0-*",
+    "Microsoft.AspNetCore.Mvc": "1.0.0",
+    "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
+    "Microsoft.AspNetCore.StaticFiles": "1.0.0",
+    "Microsoft.Extensions.Configuration.CommandLine": "1.0.0",
+    "Microsoft.Extensions.Configuration.Json": "1.0.0",
     "Microsoft.Net.Http": "2.2.22",
     "ServerControlService": "1.0.0-*",
-    "TorontoService": "1.0.0-*"
+    "TorontoService": "1.0.0-*",
+    "DBTek.Crypto": "2.1.0"
   },
 
   "commands": {
-    "web": "Microsoft.AspNet.Server.Kestrel"
+    "web": "Microsoft.AspNetCore.Server.Kestrel"
   },
 
   "frameworks": {
-    "dnx451": {
+    "net451": {
     }
   },
+  
+  "buildOptions": {
+    "emitEntryPoint": true,
+    "preserveCompilationContext": true
+  },
 
-  "exclude": [
-    "wwwroot",
-    "node_modules",
-    "bower_components"
-  ],
-  "publishExclude": [
-    "node_modules",
-    "bower_components",
-    "**.xproj",
-    "**.user",
-    "**.vspscc"
-  ]
+  "publishOptions": {
+    "include": [
+      "wwwroot",
+      "Views",
+      "Areas/**/Views",
+      "appsettings.json",
+      "web.config"
+    ]
+  },
+
+  "runtimes": { "ubuntu.14.04-x64": {} }
 }

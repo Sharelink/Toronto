@@ -1,16 +1,12 @@
 {
   "version": "1.0.0-*",
   "description": "TorontoService Class Library",
-  "authors": [ "广杰" ],
-  "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
 
   "dependencies": {
     "BahamutService": "1.0.0-*"
   },
 
   "frameworks": {
-    "dnx451": { }
+    "net451": { }
   }
 }
