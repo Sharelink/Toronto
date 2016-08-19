@@ -43,7 +43,7 @@ namespace TorontoService
             return newShareThing;
         }
 
-        public async void InsertMails(IEnumerable<ShareThingMail> mails)
+        public async Task InsertMails(IEnumerable<ShareThingMail> mails)
         {
             var shareThingMailCollection = Client.GetDatabase("Sharelink").GetCollection<ShareThingMail>("ShareThingMail");
             await shareThingMailCollection.InsertManyAsync(mails);

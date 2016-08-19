@@ -21,7 +21,6 @@ namespace TorontoAPIServer.Controllers
         public async Task<object[]> Get()
         {
             var sharelinkTagService = this.UseSharelinkTagService().GetSharelinkTagService();
-            var shareService = this.UseSharelinkerService().GetSharelinkerService();
             try
             {
                 var tags = await sharelinkTagService.GetUserSharelinkTags(UserSessionData.UserId);

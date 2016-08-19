@@ -85,7 +85,7 @@ namespace TorontoAPIServer.Controllers
                                      ToSharelinker = newUser.Id,
                                      Time = s.ShareTime
                                  };
-                shareService.InsertMails(shareMails);
+                await shareService.InsertMails(shareMails);
                 #endregion
 
                 var sessionData = await tokenService.ValidateAccessToken(Startup.Appkey, accountId, accessToken, newUser.Id.ToString());
